@@ -11,6 +11,8 @@ import org.eclipse.emf.emfstore.client.model.Workspace;
 import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
+import org.eclipse.emf.emfstore.common.model.IdEObjectCollection;
+import org.eclipse.emf.emfstore.common.model.ModelFactory;
 import org.eclipse.emf.emfstore.common.model.Project;
 import org.eclipse.emf.emfstore.common.model.util.ModelUtil;
 import org.eclipse.emf.emfstore.server.exceptions.EmfStoreException;
@@ -164,8 +166,23 @@ public class EMFStorage{
 	public void replay(int version) {
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
+		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
 		
 		List<AbstractOperation> operations;
+<<<<<<< HEAD
+        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+        	operations = cp.getLeafOperations();
+        	for (AbstractOperation o : operations) {
+        		replayElement(o, collection);
+        	}
+        	// pause fo a moment to see changes
+        	try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+
+			}
+        }
+=======
 		try {
 	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
 	        	operations = cp.getLeafOperations();
@@ -176,11 +193,14 @@ public class EMFStorage{
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
+>>>>>>> 3e3128170c37954b6a53870814cf63d6f74d0cbe
 	}
 	
-	private void replayElement(AbstractOperation o) {
+	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
 		if (o instanceof AttributeOperation) {
-			
+			AttributeOperation ao = (AttributeOperation) o;
+			collection.addModelElement(replayBody);
+			ao.apply(collection);
 		}
 	}
 	
