@@ -29,8 +29,18 @@ public class EMFStorage{
 	private Body replayBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
+	
+	private static EMFStorage INSTANCE;
+	
 	public EMFStorage(Body body) {
+		if (INSTANCE == null) {
+			INSTANCE = this;
 		connectToEMFStoreAndInit(body);
+		}
+	}
+	
+	public static EMFStorage getInstance() {
+		return INSTANCE;
 	}
 	
 	private void connectToEMFStoreAndInit(final Body body) {
@@ -92,7 +102,11 @@ public class EMFStorage{
 		}
 	}
 	
-	public void replay() throws EmfStoreException {
+	public Body getReplayingBody() {
+		return replayBody;
+	}
+	
+	public void replay() {
 		replay(0);
 	}
 	
@@ -102,12 +116,13 @@ public class EMFStorage{
 	 * @param initCommit 
 	 * @throws EmfStoreException
 	 */
-	public void replay(int version) throws EmfStoreException {
+	public void replay(int version) {
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
 		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
 		
 		List<AbstractOperation> operations;
+<<<<<<< HEAD
         for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
         	operations = cp.getLeafOperations();
         	for (AbstractOperation o : operations) {
@@ -120,6 +135,18 @@ public class EMFStorage{
 
 			}
         }
+=======
+		try {
+	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+	        	operations = cp.getLeafOperations();
+	        	for (AbstractOperation o : operations) {
+	        		replayElement(o);
+	        	}
+	        }
+		} catch (EmfStoreException e) {
+			e.printStackTrace();
+		}
+>>>>>>> 3e3128170c37954b6a53870814cf63d6f74d0cbe
 	}
 	
 	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
