@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
 import org.eclipse.emf.emfstore.client.model.Workspace;
@@ -52,6 +53,7 @@ public class EMFStorage{
 	private Body replayBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
+	private IdEObjectCollection collection;
 	
 	private static EMFStorage INSTANCE;
 	
@@ -164,17 +166,18 @@ public class EMFStorage{
 	 * @throws EmfStoreException
 	 */
 	public void replay(int version) {
+		//TODO move?
+		initIds();
+		
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
-		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
-		collection.addModelElement(replayBody);
 		
 		List<AbstractOperation> operations;
 		try {
 	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
 	        	operations = cp.getLeafOperations();
 	        	for (AbstractOperation o : operations) {
-	        		replayElement(o, collection);
+	        		replayElement(o);
 	        	}
 	        	// pause fo a moment to see changes
 	        	try {
@@ -188,10 +191,64 @@ public class EMFStorage{
 		}
 	}
 	
-	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
+	private void replayElement(AbstractOperation o) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
 			ao.apply(collection);
+		}
+	}
+	
+	private void initIds() {
+		collection = ModelFactory.eINSTANCE.createProject();
+		collection.addModelElement(replayBody);
+		
+		Project project = projectSpace.getProject();
+		
+		for (EObject o : project.getAllModelElements()) {
+			String elementId = project.getModelElementId(o).getId();
+			if (o instanceof Head) {
+				collection.getModelElementId(replayBody.getHead()).setId(elementId);
+			} else if (o instanceof CenterShoulder) {
+				collection.getModelElementId(replayBody.getCenterShoulder()).setId(elementId);
+			} else if (o instanceof LeftShoulder) {
+				collection.getModelElementId(replayBody.getLeftShoulder()).setId(elementId);
+			} else if (o instanceof RightShoulder) {
+				collection.getModelElementId(replayBody.getRightShoulder()).setId(elementId);
+			} else if (o instanceof LeftElbow) {
+				collection.getModelElementId(replayBody.getLeftElbow()).setId(elementId);
+			} else if (o instanceof RightElbow) {
+				collection.getModelElementId(replayBody.getRightElbow()).setId(elementId);
+			} else if (o instanceof LeftWrist) {
+				collection.getModelElementId(replayBody.getLeftWrist()).setId(elementId);
+			} else if (o instanceof RightWrist) {
+				collection.getModelElementId(replayBody.getRightWrist()).setId(elementId);
+			} else if (o instanceof LeftHand) {
+				collection.getModelElementId(replayBody.getLeftHand()).setId(elementId);
+			} else if (o instanceof RightHand) {
+				collection.getModelElementId(replayBody.getRightHand()).setId(elementId);
+			} else if (o instanceof Spine) {
+				collection.getModelElementId(replayBody.getSpine()).setId(elementId);
+			} else if (o instanceof CenterHip) {
+				collection.getModelElementId(replayBody.getCenterHip()).setId(elementId);
+			} else if (o instanceof LeftHip) {
+				collection.getModelElementId(replayBody.getLeftHip()).setId(elementId);
+			} else if (o instanceof RightHip) {
+				collection.getModelElementId(replayBody.getRightHip()).setId(elementId);
+			} else if (o instanceof LeftKnee) {
+				collection.getModelElementId(replayBody.getLeftKnee()).setId(elementId);
+			} else if (o instanceof RightKnee) {
+				collection.getModelElementId(replayBody.getRightKnee()).setId(elementId);
+			} else if (o instanceof LeftAnkle) {
+				collection.getModelElementId(replayBody.getLeftAnkle()).setId(elementId);
+			} else if (o instanceof RightAnkle) {
+				collection.getModelElementId(replayBody.getRightAnkle()).setId(elementId);
+			} else if (o instanceof LeftFoot) {
+					collection.getModelElementId(replayBody.getLeftFoot()).setId(elementId);
+			} else if (o instanceof RightFoot) {
+				collection.getModelElementId(replayBody.getRightFoot()).setId(elementId);
+			} else {
+				//do nothing
+			}
 		}
 	}
 	
