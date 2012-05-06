@@ -169,31 +169,22 @@ public class EMFStorage{
 		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
 		
 		List<AbstractOperation> operations;
-<<<<<<< HEAD
-        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
-        	operations = cp.getLeafOperations();
-        	for (AbstractOperation o : operations) {
-        		replayElement(o, collection);
-        	}
-        	// pause fo a moment to see changes
-        	try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-
-			}
-        }
-=======
 		try {
 	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
 	        	operations = cp.getLeafOperations();
 	        	for (AbstractOperation o : operations) {
-	        		replayElement(o);
+	        		replayElement(o, collection);
 	        	}
+	        	// pause fo a moment to see changes
+	        	try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+
+				}
 	        }
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
->>>>>>> 3e3128170c37954b6a53870814cf63d6f74d0cbe
 	}
 	
 	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
