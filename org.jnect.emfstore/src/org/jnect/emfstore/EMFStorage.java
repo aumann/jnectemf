@@ -16,6 +16,7 @@ import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
 import org.eclipse.emf.emfstore.common.model.IdEObjectCollection;
+import org.eclipse.emf.emfstore.common.model.ModelElementId;
 import org.eclipse.emf.emfstore.common.model.ModelFactory;
 import org.eclipse.emf.emfstore.common.model.Project;
 import org.eclipse.emf.emfstore.common.model.util.ModelUtil;
@@ -214,7 +215,7 @@ public class EMFStorage{
 	public void replay(int version) {
 		currentlyReplaying = true;
 		//TODO move?
-		initIds();
+		//initIds();
 		
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
@@ -228,8 +229,10 @@ public class EMFStorage{
 	        	for (AbstractOperation o : operations) {
 	        		replayElement(o);
 	        	}
+
+	        	// pause for a moment to see changes
 	        	try {
-					Thread.sleep(1000);
+					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -251,11 +254,67 @@ public class EMFStorage{
 	}
 	
 	private void replayElement(AbstractOperation o) {
+		
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
 
-			ao.eResource();
-			ao.apply(collection);
+			ModelElementId id = ao.getModelElementId();
+			EObject element = projectSpace.getProject().getModelElement(id);
+			Float newValue = (Float) ao.getNewValue();
+			
+			String attribute = ao.getFeatureName(); // form: Set attribute-name attribute
+			System.out.println(attribute);
+			if (element instanceof Head) {
+				setValue(attribute, replayBody.getHead(), newValue);
+			} else if (element instanceof CenterShoulder) {
+				setValue(attribute, replayBody.getCenterShoulder(), newValue);
+			} else if (element instanceof LeftShoulder) {
+				setValue(attribute, replayBody.getLeftShoulder(), newValue);
+			} else if (element instanceof RightShoulder) {
+				setValue(attribute, replayBody.getRightShoulder(), newValue);
+			} else if (element instanceof LeftElbow) {
+				setValue(attribute, replayBody.getLeftElbow(), newValue);
+			} else if (element instanceof RightElbow) {
+				setValue(attribute, replayBody.getRightElbow(), newValue);
+			} else if (element instanceof LeftWrist) {
+				setValue(attribute, replayBody.getLeftWrist(), newValue);
+			} else if (element instanceof RightWrist) {
+				setValue(attribute, replayBody.getRightWrist(), newValue);
+			} else if (element instanceof LeftHand) {
+				setValue(attribute, replayBody.getLeftHand(), newValue);
+			} else if (element instanceof RightHand) {
+				setValue(attribute, replayBody.getRightHand(), newValue);
+			} else if (element instanceof Spine) {
+				setValue(attribute, replayBody.getSpine(), newValue);
+			} else if (element instanceof CenterHip) {
+				setValue(attribute, replayBody.getCenterHip(), newValue);
+			} else if (element instanceof LeftHip) {
+				setValue(attribute, replayBody.getLeftHip(), newValue);
+			} else if (element instanceof RightHip) {
+				setValue(attribute, replayBody.getRightHip(), newValue);
+			} else if (element instanceof LeftKnee) {
+				setValue(attribute, replayBody.getLeftKnee(), newValue);
+			} else if (element instanceof RightKnee) {
+				setValue(attribute, replayBody.getRightKnee(), newValue);
+			} else if (element instanceof LeftAnkle) {
+				setValue(attribute, replayBody.getLeftAnkle(), newValue);
+			} else if (element instanceof RightAnkle) {
+				setValue(attribute, replayBody.getRightAnkle(), newValue);
+			} else if (element instanceof LeftFoot) {
+				setValue(attribute, replayBody.getLeftFoot(), newValue);
+			} else if (element instanceof RightFoot) {
+				setValue(attribute, replayBody.getRightFoot(), newValue);
+			} 
+		}
+	}
+	
+	private void setValue(String attribute, PositionedElement element, Float value) {
+		if (attribute.equalsIgnoreCase("x")) {
+			element.setX(value);
+		} else if (attribute.equalsIgnoreCase("y")) {
+			element.setY(value);
+		} else if (attribute.equalsIgnoreCase("z")) {
+			element.setZ(value);
 		}
 	}
 	
