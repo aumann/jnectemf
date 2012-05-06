@@ -214,8 +214,6 @@ public class EMFStorage{
 	 */
 	public void replay(int version) {
 		currentlyReplaying = true;
-		//TODO move?
-		//initIds();
 		
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
@@ -230,22 +228,12 @@ public class EMFStorage{
 	        		replayElement(o);
 	        	}
 
-	        	// pause for a moment to see changes
+	        	// pause for a moment to see changes TODO remove
 	        	try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-//	        	for (AbstractOperation o : operations) {
-//	        		replayElement(o, collection);
-//	        	}
-//	        	// pause fo a moment to see changes
-//	        	try {
-//					Thread.sleep(100);
-//				} catch (InterruptedException e) {
-//
-//				}
 	        }
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
@@ -254,16 +242,13 @@ public class EMFStorage{
 	}
 	
 	private void replayElement(AbstractOperation o) {
-		
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
-
 			ModelElementId id = ao.getModelElementId();
 			EObject element = projectSpace.getProject().getModelElement(id);
-			Float newValue = (Float) ao.getNewValue();
-			
+			Object newValue = ao.getNewValue();
 			String attribute = ao.getFeatureName(); // form: Set attribute-name attribute
-			System.out.println(attribute);
+
 			if (element instanceof Head) {
 				setValue(attribute, replayBody.getHead(), newValue);
 			} else if (element instanceof CenterShoulder) {
@@ -308,66 +293,14 @@ public class EMFStorage{
 		}
 	}
 	
-	private void setValue(String attribute, PositionedElement element, Float value) {
+	private void setValue(String attribute, PositionedElement element, Object value) {
 		if (attribute.equalsIgnoreCase("x")) {
-			element.setX(value);
+			element.setX((Float) value);
 		} else if (attribute.equalsIgnoreCase("y")) {
-			element.setY(value);
+			element.setY((Float) value);
 		} else if (attribute.equalsIgnoreCase("z")) {
-			element.setZ(value);
+			element.setZ((Float) value);
 		}
-	}
-	
-	private void initIds() {
-		collection = ModelFactory.eINSTANCE.createProject();
-		collection.addModelElement(replayBody);
-		
-		Project project = projectSpace.getProject();
-		
-//		for (EObject o : project.getAllModelElements()) {
-//			String elementId = project.getModelElementId(o).getId();
-//			if (o instanceof Head) {
-//				collection.getModelElementId(replayBody.getHead()).setId(elementId);
-//			} else if (o instanceof CenterShoulder) {
-//				collection.getModelElementId(replayBody.getCenterShoulder()).setId(elementId);
-//			} else if (o instanceof LeftShoulder) {
-//				collection.getModelElementId(replayBody.getLeftShoulder()).setId(elementId);
-//			} else if (o instanceof RightShoulder) {
-//				collection.getModelElementId(replayBody.getRightShoulder()).setId(elementId);
-//			} else if (o instanceof LeftElbow) {
-//				collection.getModelElementId(replayBody.getLeftElbow()).setId(elementId);
-//			} else if (o instanceof RightElbow) {
-//				collection.getModelElementId(replayBody.getRightElbow()).setId(elementId);
-//			} else if (o instanceof LeftWrist) {
-//				collection.getModelElementId(replayBody.getLeftWrist()).setId(elementId);
-//			} else if (o instanceof RightWrist) {
-//				collection.getModelElementId(replayBody.getRightWrist()).setId(elementId);
-//			} else if (o instanceof LeftHand) {
-//				collection.getModelElementId(replayBody.getLeftHand()).setId(elementId);
-//			} else if (o instanceof RightHand) {
-//				collection.getModelElementId(replayBody.getRightHand()).setId(elementId);
-//			} else if (o instanceof Spine) {
-//				collection.getModelElementId(replayBody.getSpine()).setId(elementId);
-//			} else if (o instanceof CenterHip) {
-//				collection.getModelElementId(replayBody.getCenterHip()).setId(elementId);
-//			} else if (o instanceof LeftHip) {
-//				collection.getModelElementId(replayBody.getLeftHip()).setId(elementId);
-//			} else if (o instanceof RightHip) {
-//				collection.getModelElementId(replayBody.getRightHip()).setId(elementId);
-//			} else if (o instanceof LeftKnee) {
-//				collection.getModelElementId(replayBody.getLeftKnee()).setId(elementId);
-//			} else if (o instanceof RightKnee) {
-//				collection.getModelElementId(replayBody.getRightKnee()).setId(elementId);
-//			} else if (o instanceof LeftAnkle) {
-//				collection.getModelElementId(replayBody.getLeftAnkle()).setId(elementId);
-//			} else if (o instanceof RightAnkle) {
-//				collection.getModelElementId(replayBody.getRightAnkle()).setId(elementId);
-//			} else if (o instanceof LeftFoot) {
-//					collection.getModelElementId(replayBody.getLeftFoot()).setId(elementId);
-//			} else if (o instanceof RightFoot) {
-//				collection.getModelElementId(replayBody.getRightFoot()).setId(elementId);
-//			}
-//		}
 	}
 	
 	private Body createAndFillBody() {
