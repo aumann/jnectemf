@@ -15,7 +15,6 @@ import org.eclipse.emf.emfstore.client.model.Workspace;
 import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
-import org.eclipse.emf.emfstore.common.model.IdEObjectCollection;
 import org.eclipse.emf.emfstore.common.model.ModelElementId;
 import org.eclipse.emf.emfstore.common.model.Project;
 import org.eclipse.emf.emfstore.common.model.util.ModelUtil;
@@ -59,7 +58,6 @@ public class EMFStorage{
 	ProjectSpace projectSpace;
 	Usersession usersession;
 	private boolean currentlyReplaying;
-	private IdEObjectCollection collection;
 	
 	private static EMFStorage INSTANCE;
 	
@@ -184,27 +182,6 @@ public class EMFStorage{
 		replay(0);
 	}
 	
-	private void dummyReplay() {
-		replayBody.getCenterHip().setX(replayBody.getCenterHip().getX() + 1.1f);
-		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f);
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			
-			e.printStackTrace();
-		}
-		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() - 0.1f * replayBody.getLeftKnee().getY());
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f * replayBody.getLeftKnee().getY());
-		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f * replayBody.getLeftKnee().getY());
-	}
-
 	/**
 	 * Replays the body model from emfstore
 	 * 
@@ -228,14 +205,14 @@ public class EMFStorage{
 
 			        	for (AbstractOperation o : operations) {
 			        		replayElement(o);
+			        		
+			        		// pause for a moment to see changes TODO remove
+				        	try {
+				        		Thread.sleep(20);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
 			        	}
-
-			        	// pause for a moment to see changes TODO remove
-			        	try {
-							Thread.sleep(500);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
 			        	currentlyReplaying = false;
 			        }
 				} catch (EmfStoreException e) {
