@@ -21,16 +21,15 @@ import org.eclipse.emf.emfstore.server.model.versioning.LogMessage;
 import org.eclipse.emf.emfstore.server.model.versioning.PrimaryVersionSpec;
 import org.eclipse.emf.emfstore.server.model.versioning.VersioningFactory;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AbstractOperation;
+import org.eclipse.emf.emfstore.server.model.versioning.operations.AttributeOperation;
 import org.jnect.bodymodel.Body;
 
 public class EMFStorage{
-	private Body body;
+	private Body replayBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
 	public EMFStorage(Body body) {
-		this.body = body;
 		connectToEMFStoreAndInit(body);
-		
 	}
 	
 	private void connectToEMFStoreAndInit(final Body body) {
@@ -92,14 +91,34 @@ public class EMFStorage{
 		}
 	}
 	
-	public void replay(PrimaryVersionSpec initCommit) throws EmfStoreException {
-        for (ChangePackage p : projectSpace.getChanges(initCommit, projectSpace.getBaseVersion())) {
-        	p.cannonize();
-        	EList<AbstractOperation> operations = p.getOperations();
-        	
+	public void replay() throws EmfStoreException {
+		replay(0);
+	}
+	
+	/**
+	 * Replays the body model from emfstore
+	 * 
+	 * @param initCommit 
+	 * @throws EmfStoreException
+	 */
+	public void replay(int version) throws EmfStoreException {
+		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
+		start.setIdentifier(version);
+		
+		List<AbstractOperation> operations;
+        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+        	operations = cp.getLeafOperations();
+        	for (AbstractOperation o : operations) {
+        		replayElement(o);
+        	}
         }
 	}
 	
+	private void replayElement(AbstractOperation o) {
+		if (o instanceof AttributeOperation) {
+			
+		}
+	}
 	
 
 }
