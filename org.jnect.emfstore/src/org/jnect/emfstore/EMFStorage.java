@@ -52,13 +52,14 @@ public class EMFStorage{
 	private Body replayBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
+	private boolean currentlyReplaying;
 	
 	private static EMFStorage INSTANCE;
 	
 	public EMFStorage(Body body) {
 		if (INSTANCE == null) {
 			INSTANCE = this;
-		connectToEMFStoreAndInit(body);
+			connectToEMFStoreAndInit(body);
 		}
 	}
 	
@@ -116,6 +117,8 @@ public class EMFStorage{
 		
 
 	public void updateBody() {
+		if (currentlyReplaying)
+			return;
         // commit the pending changes of the project to the EMF Store
         try {
 			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null, new NullProgressMonitor());
@@ -164,6 +167,7 @@ public class EMFStorage{
 	 * @throws EmfStoreException
 	 */
 	public void replay(int version) {
+		currentlyReplaying = false;
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
 		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
@@ -172,25 +176,38 @@ public class EMFStorage{
 		List<AbstractOperation> operations;
 		try {
 	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+	        	cp.getOperations();
 	        	operations = cp.getLeafOperations();
-	        	for (AbstractOperation o : operations) {
-	        		replayElement(o, collection);
+	        	for (AbstractOperation op: operations) {
+	        		op.apply(collection);
 	        	}
-	        	// pause fo a moment to see changes
 	        	try {
-					Thread.sleep(100);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
-
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+//	        	for (AbstractOperation o : operations) {
+//	        		replayElement(o, collection);
+//	        	}
+//	        	// pause fo a moment to see changes
+//	        	try {
+//					Thread.sleep(100);
+//				} catch (InterruptedException e) {
+//
+//				}
 	        }
 		} catch (EmfStoreException e) {
 			e.printStackTrace();
 		}
+		currentlyReplaying = false;
 	}
 	
 	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
+
+			ao.eResource();
 			ao.apply(collection);
 		}
 	}
