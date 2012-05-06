@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
 import org.eclipse.emf.emfstore.client.model.Workspace;
@@ -28,8 +27,18 @@ public class EMFStorage{
 	private Body replayBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
+	
+	private static EMFStorage INSTANCE;
+	
 	public EMFStorage(Body body) {
+		if (INSTANCE == null) {
+			INSTANCE = this;
 		connectToEMFStoreAndInit(body);
+		}
+	}
+	
+	public static EMFStorage getInstance() {
+		return INSTANCE;
 	}
 	
 	private void connectToEMFStoreAndInit(final Body body) {
@@ -91,7 +100,11 @@ public class EMFStorage{
 		}
 	}
 	
-	public void replay() throws EmfStoreException {
+	public Body getReplayingBody() {
+		return replayBody;
+	}
+	
+	public void replay() {
 		replay(0);
 	}
 	
@@ -101,17 +114,21 @@ public class EMFStorage{
 	 * @param initCommit 
 	 * @throws EmfStoreException
 	 */
-	public void replay(int version) throws EmfStoreException {
+	public void replay(int version) {
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
 		
 		List<AbstractOperation> operations;
-        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
-        	operations = cp.getLeafOperations();
-        	for (AbstractOperation o : operations) {
-        		replayElement(o);
-        	}
-        }
+		try {
+	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+	        	operations = cp.getLeafOperations();
+	        	for (AbstractOperation o : operations) {
+	        		replayElement(o);
+	        	}
+	        }
+		} catch (EmfStoreException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void replayElement(AbstractOperation o) {
