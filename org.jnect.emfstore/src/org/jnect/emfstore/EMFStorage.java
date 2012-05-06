@@ -17,7 +17,6 @@ import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
 import org.eclipse.emf.emfstore.common.model.IdEObjectCollection;
 import org.eclipse.emf.emfstore.common.model.ModelElementId;
-import org.eclipse.emf.emfstore.common.model.ModelFactory;
 import org.eclipse.emf.emfstore.common.model.Project;
 import org.eclipse.emf.emfstore.common.model.util.ModelUtil;
 import org.eclipse.emf.emfstore.server.exceptions.EmfStoreException;
@@ -212,33 +211,42 @@ public class EMFStorage{
 	 * @param initCommit 
 	 * @throws EmfStoreException
 	 */
-	public void replay(int version) {
-		currentlyReplaying = true;
-		
-		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
-		start.setIdentifier(version);
-		
-		List<AbstractOperation> operations;
-		try {
-	        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
-	        	cp.getOperations();
-	        	operations = cp.getLeafOperations();
+	public void replay(final int version) {
+		Thread replayThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				currentlyReplaying = true;
+				PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
+				start.setIdentifier(version);
+				
+				List<AbstractOperation> operations;
+				try {
+			        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+			        	cp.getOperations();
+			        	operations = cp.getLeafOperations();
 
-	        	for (AbstractOperation o : operations) {
-	        		replayElement(o);
-	        	}
+			        	for (AbstractOperation o : operations) {
+			        		replayElement(o);
+			        	}
 
-	        	// pause for a moment to see changes TODO remove
-	        	try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
+			        	// pause for a moment to see changes TODO remove
+			        	try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+			        	currentlyReplaying = false;
+			        }
+				} catch (EmfStoreException e) {
 					e.printStackTrace();
 				}
-	        }
-		} catch (EmfStoreException e) {
-			e.printStackTrace();
-		}
-		currentlyReplaying = false;
+			}
+		});
+		replayThread.start();
+		
+		
+
 	}
 	
 	private void replayElement(AbstractOperation o) {
