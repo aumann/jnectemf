@@ -22,6 +22,29 @@ import org.eclipse.emf.emfstore.server.model.versioning.VersioningFactory;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AbstractOperation;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AttributeOperation;
 import org.jnect.bodymodel.Body;
+import org.jnect.bodymodel.BodymodelFactory;
+import org.jnect.bodymodel.CenterHip;
+import org.jnect.bodymodel.CenterShoulder;
+import org.jnect.bodymodel.Head;
+import org.jnect.bodymodel.HumanLink;
+import org.jnect.bodymodel.LeftAnkle;
+import org.jnect.bodymodel.LeftElbow;
+import org.jnect.bodymodel.LeftFoot;
+import org.jnect.bodymodel.LeftHand;
+import org.jnect.bodymodel.LeftHip;
+import org.jnect.bodymodel.LeftKnee;
+import org.jnect.bodymodel.LeftShoulder;
+import org.jnect.bodymodel.LeftWrist;
+import org.jnect.bodymodel.PositionedElement;
+import org.jnect.bodymodel.RightAnkle;
+import org.jnect.bodymodel.RightElbow;
+import org.jnect.bodymodel.RightFoot;
+import org.jnect.bodymodel.RightHand;
+import org.jnect.bodymodel.RightHip;
+import org.jnect.bodymodel.RightKnee;
+import org.jnect.bodymodel.RightShoulder;
+import org.jnect.bodymodel.RightWrist;
+import org.jnect.bodymodel.Spine;
 
 public class EMFStorage{
 	private Body replayBody;
@@ -101,13 +124,37 @@ public class EMFStorage{
 	}
 	
 	public Body getReplayingBody() {
+		if (replayBody == null)
+			fillBody();
 		return replayBody;
 	}
 	
 	public void replay() {
+		dummyReplay();
 		replay(0);
 	}
 	
+	private void dummyReplay() {
+		replayBody.getCenterHip().setX(replayBody.getCenterHip().getX() + 1.1f);
+		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			
+			e.printStackTrace();
+		}
+		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() - 0.1f * replayBody.getLeftKnee().getY());
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f * replayBody.getLeftKnee().getY());
+		replayBody.getLeftKnee().setY(replayBody.getLeftKnee().getY() + 0.1f * replayBody.getLeftKnee().getY());
+	}
+
 	/**
 	 * Replays the body model from emfstore
 	 * 
@@ -135,6 +182,95 @@ public class EMFStorage{
 		if (o instanceof AttributeOperation) {
 			
 		}
+	}
+	
+	private void fillBody() {
+		replayBody = BodymodelFactory.eINSTANCE.createBody();
+		BodymodelFactory factory=BodymodelFactory.eINSTANCE;
+		//create Elements
+		Head head=factory.createHead();
+		CenterShoulder shoulderCenter = factory.createCenterShoulder();
+		LeftShoulder shoulderLeft = factory.createLeftShoulder();
+		RightShoulder shoulderRight = factory.createRightShoulder();
+		LeftElbow elbowLeft = factory.createLeftElbow();
+		RightElbow elbowRight = factory.createRightElbow();
+		LeftWrist wristLeft = factory.createLeftWrist();
+		RightWrist wristRight = factory.createRightWrist();
+		LeftHand handLeft = factory.createLeftHand();
+		RightHand handRight = factory.createRightHand();
+		Spine spine =factory.createSpine();
+		CenterHip hipCenter = factory.createCenterHip();
+		LeftHip hipLeft = factory.createLeftHip();
+		RightHip hipRight = factory.createRightHip();
+		LeftKnee kneeLeft = factory.createLeftKnee();
+		RightKnee kneeRight = factory.createRightKnee();
+		LeftAnkle ankleLeft = factory.createLeftAnkle();
+		RightAnkle ankleRight = factory.createRightAnkle();
+		LeftFoot footLeft = factory.createLeftFoot();
+		RightFoot footRight = factory.createRightFoot();
+		
+		//set color
+		footLeft.setColor_g(255);
+		footRight.setColor_g(255);
+		handLeft.setColor_r(255);
+		handLeft.setColor_g(0);
+		handLeft.setColor_b(0);
+		handRight.setColor_r(255);
+		head.setColor_b(255);
+		
+		//add elements to body
+		replayBody.setHead(head);
+		replayBody.setLeftAnkle(ankleLeft);
+		replayBody.setRightAnkle(ankleRight);
+		replayBody.setLeftElbow(elbowLeft);
+		replayBody.setRightElbow(elbowRight);
+		replayBody.setLeftFoot(footLeft);
+		replayBody.setRightFoot(footRight);
+		replayBody.setLeftHand(handLeft);
+		replayBody.setRightHand(handRight);
+		replayBody.setCenterHip(hipCenter);
+		replayBody.setLeftHip(hipLeft);
+		replayBody.setRightHip(hipRight);
+		replayBody.setLeftKnee(kneeLeft);
+		replayBody.setRightKnee(kneeRight);
+		replayBody.setCenterShoulder(shoulderCenter);
+		replayBody.setLeftShoulder(shoulderLeft);
+		replayBody.setRightShoulder(shoulderRight);
+		replayBody.setSpine(spine);
+		replayBody.setLeftWrist(wristLeft);
+		replayBody.setRightWrist(wristRight);
+		
+		//create links
+		createLink(head, shoulderCenter);
+		createLink(shoulderCenter, shoulderLeft);
+		createLink(shoulderCenter, shoulderRight);
+		createLink(shoulderLeft, elbowLeft);
+		createLink(shoulderRight, elbowRight);
+		createLink(elbowLeft, wristLeft);
+		createLink(elbowRight, wristRight);
+		createLink(wristLeft, handLeft);
+		createLink(wristRight, handRight);
+		createLink(shoulderCenter,spine);
+		createLink(spine, hipCenter);
+		createLink(hipCenter, hipLeft);
+		createLink(hipCenter, hipRight);
+		createLink(hipLeft, kneeLeft);
+		createLink(hipRight, kneeRight);
+		createLink(kneeLeft, ankleLeft);
+		createLink(kneeRight, ankleRight);
+		createLink(ankleLeft, footLeft);
+		createLink(ankleRight, footRight);
+	}
+	
+	private void createLink(PositionedElement source, PositionedElement target) {
+		HumanLink link = BodymodelFactory.eINSTANCE.createHumanLink();
+		link.setSource(source);
+		link.setTarget(target);
+		
+		source.getOutgoingLinks().add(link);
+		target.getIncomingLinks().add(link);
+		
+		replayBody.getLinks().add(link);
 	}
 	
 
