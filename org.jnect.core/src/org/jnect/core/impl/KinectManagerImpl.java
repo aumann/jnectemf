@@ -72,10 +72,11 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 		// this.connectionManager = new SocketConnectionManager();
 		this.connectionManager = new ProxyConnectionManager();
 		this.connectionManager.setDataHandler(this);
-		body=BodymodelFactory.eINSTANCE.createBody();
-		fillBody();
+		emfStorage = new EMFStorage();
+		body = emfStorage.getRecordingBody();
+//		body=BodymodelFactory.eINSTANCE.createBody();
+//		fillBody();
 		this.skeletonParser = new SkeletonParser(body);
-		emfStorage = new EMFStorage(body);
 	}
 
 	private void fillBody() {

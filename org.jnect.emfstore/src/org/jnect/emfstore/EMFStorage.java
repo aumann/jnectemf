@@ -5,6 +5,9 @@ import java.util.Calendar;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.emf.common.notify.Adapter;
+import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
@@ -24,6 +27,7 @@ import org.eclipse.emf.emfstore.server.model.versioning.PrimaryVersionSpec;
 import org.eclipse.emf.emfstore.server.model.versioning.VersioningFactory;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AbstractOperation;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AttributeOperation;
+import org.eclipse.swt.widgets.Display;
 import org.jnect.bodymodel.Body;
 import org.jnect.bodymodel.BodymodelFactory;
 import org.jnect.bodymodel.CenterHip;
@@ -51,6 +55,7 @@ import org.jnect.bodymodel.Spine;
 
 public class EMFStorage{
 	private Body replayBody;
+	private Body recordingBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
 	private boolean currentlyReplaying;
@@ -58,10 +63,10 @@ public class EMFStorage{
 	
 	private static EMFStorage INSTANCE;
 	
-	public EMFStorage(Body body) {
+	public EMFStorage() {
 		if (INSTANCE == null) {
 			INSTANCE = this;
-			connectToEMFStoreAndInit(body);
+			connectToEMFStoreAndInit();
 		}
 	}
 	
@@ -69,7 +74,7 @@ public class EMFStorage{
 		return INSTANCE;
 	}
 	
-	private void connectToEMFStoreAndInit(final Body body) {
+	private void connectToEMFStoreAndInit() {
 		new EMFStoreCommand() {
             @Override
             protected void doRun() {
@@ -93,7 +98,45 @@ public class EMFStorage{
                     // create and add a new "Book" from the example model
                     // change this part to create instances of your own model
                     Project project = projectSpace.getProject();
-                    project.addModelElement(body);
+                    boolean found = false;
+                    for (EObject obj : project.getAllModelElements()) {
+                    	if (obj instanceof Body) {
+                    		recordingBody = (Body) obj;
+                    		found = true;
+                    		break;
+                    	}
+                    }
+                    if (!found) {
+                    	recordingBody = createAndFillBody();
+                    	project.addModelElement(recordingBody);
+                    }
+                    recordingBody.eAdapters().add(new Adapter() {
+            			@Override
+            			public void notifyChanged(Notification notification) {
+            				Display.getDefault().syncExec(new Runnable() {
+            					@Override
+            					public void run() {
+            						updateBody();
+            					}
+            				});
+            			}
+
+            			@Override
+            			public Notifier getTarget() {
+            				return recordingBody;
+            			}
+
+            			@Override
+            			public void setTarget(Notifier newTarget) {
+            				// TODO Auto-generated method stub
+            			}
+
+            			@Override
+            			public boolean isAdapterForType(Object type) {
+            				// TODO Auto-generated method stub
+            				return false;
+            			}
+            		});
                     projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null, new NullProgressMonitor());
 
                     
@@ -132,7 +175,7 @@ public class EMFStorage{
 	
 	public Body getReplayingBody() {
 		if (replayBody == null)
-			fillBody();
+			replayBody = createAndFillBody();
 		return replayBody;
 	}
 	
@@ -169,7 +212,7 @@ public class EMFStorage{
 	 * @throws EmfStoreException
 	 */
 	public void replay(int version) {
-		currentlyReplaying = false;
+		currentlyReplaying = true;
 		//TODO move?
 		initIds();
 		
@@ -222,56 +265,54 @@ public class EMFStorage{
 		
 		Project project = projectSpace.getProject();
 		
-		for (EObject o : project.getAllModelElements()) {
-			String elementId = project.getModelElementId(o).getId();
-			if (o instanceof Head) {
-				collection.getModelElementId(replayBody.getHead()).setId(elementId);
-			} else if (o instanceof CenterShoulder) {
-				collection.getModelElementId(replayBody.getCenterShoulder()).setId(elementId);
-			} else if (o instanceof LeftShoulder) {
-				collection.getModelElementId(replayBody.getLeftShoulder()).setId(elementId);
-			} else if (o instanceof RightShoulder) {
-				collection.getModelElementId(replayBody.getRightShoulder()).setId(elementId);
-			} else if (o instanceof LeftElbow) {
-				collection.getModelElementId(replayBody.getLeftElbow()).setId(elementId);
-			} else if (o instanceof RightElbow) {
-				collection.getModelElementId(replayBody.getRightElbow()).setId(elementId);
-			} else if (o instanceof LeftWrist) {
-				collection.getModelElementId(replayBody.getLeftWrist()).setId(elementId);
-			} else if (o instanceof RightWrist) {
-				collection.getModelElementId(replayBody.getRightWrist()).setId(elementId);
-			} else if (o instanceof LeftHand) {
-				collection.getModelElementId(replayBody.getLeftHand()).setId(elementId);
-			} else if (o instanceof RightHand) {
-				collection.getModelElementId(replayBody.getRightHand()).setId(elementId);
-			} else if (o instanceof Spine) {
-				collection.getModelElementId(replayBody.getSpine()).setId(elementId);
-			} else if (o instanceof CenterHip) {
-				collection.getModelElementId(replayBody.getCenterHip()).setId(elementId);
-			} else if (o instanceof LeftHip) {
-				collection.getModelElementId(replayBody.getLeftHip()).setId(elementId);
-			} else if (o instanceof RightHip) {
-				collection.getModelElementId(replayBody.getRightHip()).setId(elementId);
-			} else if (o instanceof LeftKnee) {
-				collection.getModelElementId(replayBody.getLeftKnee()).setId(elementId);
-			} else if (o instanceof RightKnee) {
-				collection.getModelElementId(replayBody.getRightKnee()).setId(elementId);
-			} else if (o instanceof LeftAnkle) {
-				collection.getModelElementId(replayBody.getLeftAnkle()).setId(elementId);
-			} else if (o instanceof RightAnkle) {
-				collection.getModelElementId(replayBody.getRightAnkle()).setId(elementId);
-			} else if (o instanceof LeftFoot) {
-					collection.getModelElementId(replayBody.getLeftFoot()).setId(elementId);
-			} else if (o instanceof RightFoot) {
-				collection.getModelElementId(replayBody.getRightFoot()).setId(elementId);
-			} else {
-				//do nothing
-			}
-		}
+//		for (EObject o : project.getAllModelElements()) {
+//			String elementId = project.getModelElementId(o).getId();
+//			if (o instanceof Head) {
+//				collection.getModelElementId(replayBody.getHead()).setId(elementId);
+//			} else if (o instanceof CenterShoulder) {
+//				collection.getModelElementId(replayBody.getCenterShoulder()).setId(elementId);
+//			} else if (o instanceof LeftShoulder) {
+//				collection.getModelElementId(replayBody.getLeftShoulder()).setId(elementId);
+//			} else if (o instanceof RightShoulder) {
+//				collection.getModelElementId(replayBody.getRightShoulder()).setId(elementId);
+//			} else if (o instanceof LeftElbow) {
+//				collection.getModelElementId(replayBody.getLeftElbow()).setId(elementId);
+//			} else if (o instanceof RightElbow) {
+//				collection.getModelElementId(replayBody.getRightElbow()).setId(elementId);
+//			} else if (o instanceof LeftWrist) {
+//				collection.getModelElementId(replayBody.getLeftWrist()).setId(elementId);
+//			} else if (o instanceof RightWrist) {
+//				collection.getModelElementId(replayBody.getRightWrist()).setId(elementId);
+//			} else if (o instanceof LeftHand) {
+//				collection.getModelElementId(replayBody.getLeftHand()).setId(elementId);
+//			} else if (o instanceof RightHand) {
+//				collection.getModelElementId(replayBody.getRightHand()).setId(elementId);
+//			} else if (o instanceof Spine) {
+//				collection.getModelElementId(replayBody.getSpine()).setId(elementId);
+//			} else if (o instanceof CenterHip) {
+//				collection.getModelElementId(replayBody.getCenterHip()).setId(elementId);
+//			} else if (o instanceof LeftHip) {
+//				collection.getModelElementId(replayBody.getLeftHip()).setId(elementId);
+//			} else if (o instanceof RightHip) {
+//				collection.getModelElementId(replayBody.getRightHip()).setId(elementId);
+//			} else if (o instanceof LeftKnee) {
+//				collection.getModelElementId(replayBody.getLeftKnee()).setId(elementId);
+//			} else if (o instanceof RightKnee) {
+//				collection.getModelElementId(replayBody.getRightKnee()).setId(elementId);
+//			} else if (o instanceof LeftAnkle) {
+//				collection.getModelElementId(replayBody.getLeftAnkle()).setId(elementId);
+//			} else if (o instanceof RightAnkle) {
+//				collection.getModelElementId(replayBody.getRightAnkle()).setId(elementId);
+//			} else if (o instanceof LeftFoot) {
+//					collection.getModelElementId(replayBody.getLeftFoot()).setId(elementId);
+//			} else if (o instanceof RightFoot) {
+//				collection.getModelElementId(replayBody.getRightFoot()).setId(elementId);
+//			}
+//		}
 	}
 	
-	private void fillBody() {
-		replayBody = BodymodelFactory.eINSTANCE.createBody();
+	private Body createAndFillBody() {
+		Body body = BodymodelFactory.eINSTANCE.createBody();
 		BodymodelFactory factory=BodymodelFactory.eINSTANCE;
 		//create Elements
 		Head head=factory.createHead();
@@ -305,50 +346,51 @@ public class EMFStorage{
 		head.setColor_b(255);
 		
 		//add elements to body
-		replayBody.setHead(head);
-		replayBody.setLeftAnkle(ankleLeft);
-		replayBody.setRightAnkle(ankleRight);
-		replayBody.setLeftElbow(elbowLeft);
-		replayBody.setRightElbow(elbowRight);
-		replayBody.setLeftFoot(footLeft);
-		replayBody.setRightFoot(footRight);
-		replayBody.setLeftHand(handLeft);
-		replayBody.setRightHand(handRight);
-		replayBody.setCenterHip(hipCenter);
-		replayBody.setLeftHip(hipLeft);
-		replayBody.setRightHip(hipRight);
-		replayBody.setLeftKnee(kneeLeft);
-		replayBody.setRightKnee(kneeRight);
-		replayBody.setCenterShoulder(shoulderCenter);
-		replayBody.setLeftShoulder(shoulderLeft);
-		replayBody.setRightShoulder(shoulderRight);
-		replayBody.setSpine(spine);
-		replayBody.setLeftWrist(wristLeft);
-		replayBody.setRightWrist(wristRight);
+		body.setHead(head);
+		body.setLeftAnkle(ankleLeft);
+		body.setRightAnkle(ankleRight);
+		body.setLeftElbow(elbowLeft);
+		body.setRightElbow(elbowRight);
+		body.setLeftFoot(footLeft);
+		body.setRightFoot(footRight);
+		body.setLeftHand(handLeft);
+		body.setRightHand(handRight);
+		body.setCenterHip(hipCenter);
+		body.setLeftHip(hipLeft);
+		body.setRightHip(hipRight);
+		body.setLeftKnee(kneeLeft);
+		body.setRightKnee(kneeRight);
+		body.setCenterShoulder(shoulderCenter);
+		body.setLeftShoulder(shoulderLeft);
+		body.setRightShoulder(shoulderRight);
+		body.setSpine(spine);
+		body.setLeftWrist(wristLeft);
+		body.setRightWrist(wristRight);
 		
 		//create links
-		createLink(head, shoulderCenter);
-		createLink(shoulderCenter, shoulderLeft);
-		createLink(shoulderCenter, shoulderRight);
-		createLink(shoulderLeft, elbowLeft);
-		createLink(shoulderRight, elbowRight);
-		createLink(elbowLeft, wristLeft);
-		createLink(elbowRight, wristRight);
-		createLink(wristLeft, handLeft);
-		createLink(wristRight, handRight);
-		createLink(shoulderCenter,spine);
-		createLink(spine, hipCenter);
-		createLink(hipCenter, hipLeft);
-		createLink(hipCenter, hipRight);
-		createLink(hipLeft, kneeLeft);
-		createLink(hipRight, kneeRight);
-		createLink(kneeLeft, ankleLeft);
-		createLink(kneeRight, ankleRight);
-		createLink(ankleLeft, footLeft);
-		createLink(ankleRight, footRight);
+		createLink(head, shoulderCenter, body);
+		createLink(shoulderCenter, shoulderLeft, body);
+		createLink(shoulderCenter, shoulderRight, body);
+		createLink(shoulderLeft, elbowLeft, body);
+		createLink(shoulderRight, elbowRight, body);
+		createLink(elbowLeft, wristLeft, body);
+		createLink(elbowRight, wristRight, body);
+		createLink(wristLeft, handLeft, body);
+		createLink(wristRight, handRight, body);
+		createLink(shoulderCenter,spine, body);
+		createLink(spine, hipCenter, body);
+		createLink(hipCenter, hipLeft, body);
+		createLink(hipCenter, hipRight, body);
+		createLink(hipLeft, kneeLeft, body);
+		createLink(hipRight, kneeRight, body);
+		createLink(kneeLeft, ankleLeft, body);
+		createLink(kneeRight, ankleRight, body);
+		createLink(ankleLeft, footLeft, body);
+		createLink(ankleRight, footRight, body);
+		return body;
 	}
 	
-	private void createLink(PositionedElement source, PositionedElement target) {
+	private void createLink(PositionedElement source, PositionedElement target, Body body) {
 		HumanLink link = BodymodelFactory.eINSTANCE.createHumanLink();
 		link.setSource(source);
 		link.setTarget(target);
@@ -356,7 +398,11 @@ public class EMFStorage{
 		source.getOutgoingLinks().add(link);
 		target.getIncomingLinks().add(link);
 		
-		replayBody.getLinks().add(link);
+		body.getLinks().add(link);
+	}
+
+	public Body getRecordingBody() {
+		return recordingBody;
 	}
 	
 
