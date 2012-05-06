@@ -132,7 +132,7 @@ public class EMFStorage{
 	}
 	
 	public void replay() {
-		dummyReplay();
+		// dummyReplay();
 		replay(0);
 	}
 	
@@ -167,6 +167,7 @@ public class EMFStorage{
 		PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 		start.setIdentifier(version);
 		IdEObjectCollection collection = ModelFactory.eINSTANCE.createProject();
+		collection.addModelElement(replayBody);
 		
 		List<AbstractOperation> operations;
 		try {
@@ -190,7 +191,6 @@ public class EMFStorage{
 	private void replayElement(AbstractOperation o, IdEObjectCollection collection) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
-			collection.addModelElement(replayBody);
 			ao.apply(collection);
 		}
 	}
