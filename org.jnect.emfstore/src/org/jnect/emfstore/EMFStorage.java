@@ -52,103 +52,103 @@ import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
-public class EMFStorage{
+public class EMFStorage {
 	private Body replayBody;
 	private Body recordingBody;
 	ProjectSpace projectSpace;
 	Usersession usersession;
 	private boolean currentlyReplaying;
-	
+
 	private static EMFStorage INSTANCE;
-	
-	public EMFStorage() {
-		if (INSTANCE == null) {
-			INSTANCE = this;
-			connectToEMFStoreAndInit();
-		}
+
+	protected EMFStorage() {
+		connectToEMFStoreAndInit();
 	}
-	
+
 	public static EMFStorage getInstance() {
+		if (INSTANCE == null) {
+			INSTANCE = new EMFStorage();
+		}
 		return INSTANCE;
 	}
-	
+
 	private void connectToEMFStoreAndInit() {
 		new EMFStoreCommand() {
-            @Override
-            protected void doRun() {
-                try {
-                    // create a default Usersession for the purpose of this tutorial and login
-                    // see the corrsponding Javadoc for EMFStoreClientUtil.createUsersession(...) to setup the authentication for your custom client
-                    usersession = EMFStoreClientUtil.createUsersession();
-                    usersession.logIn();
+			@Override
+			protected void doRun() {
+				try {
+					// create a default Usersession for the purpose of this tutorial and login
+					// see the corrsponding Javadoc for EMFStoreClientUtil.createUsersession(...) to setup the
+					// authentication for your custom client
+					usersession = EMFStoreClientUtil.createUsersession();
+					usersession.logIn();
 
-                    // fetch the list of projects
-                    Workspace currentWorkspace = WorkspaceManager.getInstance()
-                            .getCurrentWorkspace();
-                    List<ProjectInfo> projectList = currentWorkspace.getRemoteProjectList(usersession);
+					// fetch the list of projects
+					Workspace currentWorkspace = WorkspaceManager.getInstance().getCurrentWorkspace();
+					List<ProjectInfo> projectList = currentWorkspace.getRemoteProjectList(usersession);
 
-                    // retrieve the first Project from the List
-                    ProjectInfo projectInfo = projectList.iterator().next();
+					// retrieve the first Project from the List
+					ProjectInfo projectInfo = projectList.iterator().next();
 
-                    // checkout the ProjectSpace, containing all Models of the Project, into the local Workspace
-                    projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+					// checkout the ProjectSpace, containing all Models of the Project, into the local Workspace
+					projectSpace = currentWorkspace.checkout(usersession, projectInfo);
 
-                    // create and add a new "Book" from the example model
-                    // change this part to create instances of your own model
-                    Project project = projectSpace.getProject();
-                    boolean found = false;
-                    for (EObject obj : project.getAllModelElements()) {
-                    	if (obj instanceof Body) {
-                    		recordingBody = (Body) obj;
-                    		found = true;
-                    		break;
-                    	}
-                    }
-                    if (!found) {
-                    	recordingBody = createAndFillBody();
-                    	project.addModelElement(recordingBody);
-                    }
-                    recordingBody.eAdapters().add(new Adapter() {
-            			@Override
-            			public void notifyChanged(Notification notification) {
-            				Display.getDefault().syncExec(new Runnable() {
-            					@Override
-            					public void run() {
-            						updateBody();
-            					}
-            				});
-            			}
+					// create and add a new "Book" from the example model
+					// change this part to create instances of your own model
+					Project project = projectSpace.getProject();
+					boolean found = false;
+					for (EObject obj : project.getAllModelElements()) {
+						if (obj instanceof Body) {
+							recordingBody = (Body) obj;
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						recordingBody = createAndFillBody();
+						project.addModelElement(recordingBody);
+					}
+					recordingBody.eAdapters().add(new Adapter() {
+						@Override
+						public void notifyChanged(Notification notification) {
+							Display.getDefault().syncExec(new Runnable() {
+								@Override
+								public void run() {
+									updateBody();
+								}
+							});
+						}
 
-            			@Override
-            			public Notifier getTarget() {
-            				return recordingBody;
-            			}
+						@Override
+						public Notifier getTarget() {
+							return recordingBody;
+						}
 
-            			@Override
-            			public void setTarget(Notifier newTarget) {
-            				// TODO Auto-generated method stub
-            			}
+						@Override
+						public void setTarget(Notifier newTarget) {
+							// TODO Auto-generated method stub
+						}
 
-            			@Override
-            			public boolean isAdapterForType(Object type) {
-            				// TODO Auto-generated method stub
-            				return false;
-            			}
-            		});
-                    projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null, new NullProgressMonitor());
+						@Override
+						public boolean isAdapterForType(Object type) {
+							// TODO Auto-generated method stub
+							return false;
+						}
+					});
+					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
+						new NullProgressMonitor());
 
-                    
-                    System.out.println("Client run completed.");
-                } catch (AccessControlException e) {
-                    ModelUtil.logException(e);
-                } catch (EmfStoreException e) {
-                    ModelUtil.logException(e);
-                }
-            }
-        }.run(false);
- 
+					System.out.println("Client run completed.");
+				} catch (AccessControlException e) {
+					ModelUtil.logException(e);
+				} catch (EmfStoreException e) {
+					ModelUtil.logException(e);
+				}
+			}
+		}.run(false);
+
 	}
-	
+
 	private LogMessage createLogMessage(String name, String message) {
 		LogMessage logMessage = VersioningFactory.eINSTANCE.createLogMessage();
 		logMessage.setAuthor(name);
@@ -157,75 +157,73 @@ public class EMFStorage{
 		logMessage.setMessage(message);
 		return logMessage;
 	}
-		
 
 	public void updateBody() {
 		if (currentlyReplaying)
 			return;
-        // commit the pending changes of the project to the EMF Store
-        try {
-			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null, new NullProgressMonitor());
-        } catch (EmfStoreException e) {
+		// commit the pending changes of the project to the EMF Store
+		try {
+			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
+				new NullProgressMonitor());
+		} catch (EmfStoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Body getReplayingBody() {
 		if (replayBody == null)
 			replayBody = createAndFillBody();
 		return replayBody;
 	}
-	
+
 	public void replay() {
 		// dummyReplay();
 		replay(0);
 	}
-	
+
 	/**
 	 * Replays the body model from emfstore
 	 * 
-	 * @param initCommit 
+	 * @param initCommit
 	 * @throws EmfStoreException
 	 */
 	public void replay(final int version) {
 		Thread replayThread = new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				currentlyReplaying = true;
 				PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
 				start.setIdentifier(version);
-				
+
 				List<AbstractOperation> operations;
 				try {
-			        for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
-			        	cp.getOperations();
-			        	operations = cp.getLeafOperations();
+					for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
+						cp.getOperations();
+						operations = cp.getLeafOperations();
 
-			        	for (AbstractOperation o : operations) {
-			        		replayElement(o);
-			        		
-			        		// pause for a moment to see changes TODO remove
-				        	try {
-				        		Thread.sleep(20);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-			        	}
-			        	currentlyReplaying = false;
-			        }
+						for (AbstractOperation o : operations) {
+							replayElement(o);
+
+							// pause for a moment to see changes TODO remove
+						}
+						try {
+							Thread.sleep(25);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						currentlyReplaying = false;
+					}
 				} catch (EmfStoreException e) {
 					e.printStackTrace();
 				}
 			}
 		});
 		replayThread.start();
-		
-		
 
 	}
-	
+
 	private void replayElement(AbstractOperation o) {
 		if (o instanceof AttributeOperation) {
 			AttributeOperation ao = (AttributeOperation) o;
@@ -274,10 +272,10 @@ public class EMFStorage{
 				setValue(attribute, replayBody.getLeftFoot(), newValue);
 			} else if (element instanceof RightFoot) {
 				setValue(attribute, replayBody.getRightFoot(), newValue);
-			} 
+			}
 		}
 	}
-	
+
 	private void setValue(String attribute, PositionedElement element, Object value) {
 		if (attribute.equalsIgnoreCase("x")) {
 			element.setX((Float) value);
@@ -287,12 +285,12 @@ public class EMFStorage{
 			element.setZ((Float) value);
 		}
 	}
-	
+
 	private Body createAndFillBody() {
 		Body body = BodymodelFactory.eINSTANCE.createBody();
-		BodymodelFactory factory=BodymodelFactory.eINSTANCE;
-		//create Elements
-		Head head=factory.createHead();
+		BodymodelFactory factory = BodymodelFactory.eINSTANCE;
+		// create Elements
+		Head head = factory.createHead();
 		CenterShoulder shoulderCenter = factory.createCenterShoulder();
 		LeftShoulder shoulderLeft = factory.createLeftShoulder();
 		RightShoulder shoulderRight = factory.createRightShoulder();
@@ -302,7 +300,7 @@ public class EMFStorage{
 		RightWrist wristRight = factory.createRightWrist();
 		LeftHand handLeft = factory.createLeftHand();
 		RightHand handRight = factory.createRightHand();
-		Spine spine =factory.createSpine();
+		Spine spine = factory.createSpine();
 		CenterHip hipCenter = factory.createCenterHip();
 		LeftHip hipLeft = factory.createLeftHip();
 		RightHip hipRight = factory.createRightHip();
@@ -312,8 +310,8 @@ public class EMFStorage{
 		RightAnkle ankleRight = factory.createRightAnkle();
 		LeftFoot footLeft = factory.createLeftFoot();
 		RightFoot footRight = factory.createRightFoot();
-		
-		//set color
+
+		// set color
 		footLeft.setColor_g(255);
 		footRight.setColor_g(255);
 		handLeft.setColor_r(255);
@@ -321,8 +319,8 @@ public class EMFStorage{
 		handLeft.setColor_b(0);
 		handRight.setColor_r(255);
 		head.setColor_b(255);
-		
-		//add elements to body
+
+		// add elements to body
 		body.setHead(head);
 		body.setLeftAnkle(ankleLeft);
 		body.setRightAnkle(ankleRight);
@@ -343,8 +341,8 @@ public class EMFStorage{
 		body.setSpine(spine);
 		body.setLeftWrist(wristLeft);
 		body.setRightWrist(wristRight);
-		
-		//create links
+
+		// create links
 		createLink(head, shoulderCenter, body);
 		createLink(shoulderCenter, shoulderLeft, body);
 		createLink(shoulderCenter, shoulderRight, body);
@@ -354,7 +352,7 @@ public class EMFStorage{
 		createLink(elbowRight, wristRight, body);
 		createLink(wristLeft, handLeft, body);
 		createLink(wristRight, handRight, body);
-		createLink(shoulderCenter,spine, body);
+		createLink(shoulderCenter, spine, body);
 		createLink(spine, hipCenter, body);
 		createLink(hipCenter, hipLeft, body);
 		createLink(hipCenter, hipRight, body);
@@ -366,21 +364,20 @@ public class EMFStorage{
 		createLink(ankleRight, footRight, body);
 		return body;
 	}
-	
+
 	private void createLink(PositionedElement source, PositionedElement target, Body body) {
 		HumanLink link = BodymodelFactory.eINSTANCE.createHumanLink();
 		link.setSource(source);
 		link.setTarget(target);
-		
+
 		source.getOutgoingLinks().add(link);
 		target.getIncomingLinks().add(link);
-		
+
 		body.getLinks().add(link);
 	}
 
 	public Body getRecordingBody() {
 		return recordingBody;
 	}
-	
 
 }

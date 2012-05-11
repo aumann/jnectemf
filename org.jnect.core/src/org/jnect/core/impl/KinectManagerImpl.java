@@ -18,6 +18,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Platform;
 import org.jnect.bodymodel.Body;
 import org.jnect.bodymodel.BodymodelFactory;
 import org.jnect.bodymodel.CenterHip;
@@ -42,10 +45,10 @@ import org.jnect.bodymodel.RightKnee;
 import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
+import org.jnect.core.IBodyProvider;
 import org.jnect.core.KinectManager;
 import org.jnect.core.SpeechListener;
 import org.jnect.core.impl.connection.jni.ProxyConnectionManager;
-import org.jnect.emfstore.EMFStorage;
 import org.w3c.dom.Document;
 
 
@@ -66,20 +69,38 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 	private Map<SpeechListener, Set<String>> speechWords = new HashMap<SpeechListener, Set<String>>();
 	private Map<String, Set<SpeechListener>> filteredSpeechListeners = new HashMap<String, Set<SpeechListener>>();
 	private Set<SpeechListener> unfilteredSpeechListeners = new HashSet<SpeechListener>();
-	private EMFStorage emfStorage;
 
 	public KinectManagerImpl() {
 		// this.connectionManager = new SocketConnectionManager();
 		this.connectionManager = new ProxyConnectionManager();
 		this.connectionManager.setDataHandler(this);
-		emfStorage = new EMFStorage();
-		body = emfStorage.getRecordingBody();
+		body = retrieveBody();
 //		body=BodymodelFactory.eINSTANCE.createBody();
 //		fillBody();
 		this.skeletonParser = new SkeletonParser(body);
 	}
 
-	private void fillBody() {
+	private Body retrieveBody() {
+		IConfigurationElement[] bodyConfElements = Platform.getExtensionRegistry().getConfigurationElementsFor("org.jnect.core.bodyprovider");
+		Body body;
+		if (bodyConfElements.length > 1) {
+			throw new IllegalStateException("Only one extension for the body provider allowed currently!");
+		} else if (bodyConfElements.length == 0) {
+			body = createAndFillBody();
+		} else {
+			try {
+				IBodyProvider bodyProvider = (IBodyProvider) bodyConfElements[0].createExecutableExtension("class");
+				body = bodyProvider.getBody();
+			} catch (CoreException e) {
+				e.printStackTrace();
+				body = createAndFillBody();
+			}
+		}
+		
+		return body;		
+	}
+
+	private Body createAndFillBody() {
 		BodymodelFactory factory=BodymodelFactory.eINSTANCE;
 		//create Elements
 		Head head=factory.createHead();
@@ -111,52 +132,53 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 		handLeft.setColor_b(0);
 		handRight.setColor_r(255);
 		head.setColor_b(255);
-		
+		Body createdBody = factory.createBody();
 		//add elements to body
-		body.setHead(head);
-		body.setLeftAnkle(ankleLeft);
-		body.setRightAnkle(ankleRight);
-		body.setLeftElbow(elbowLeft);
-		body.setRightElbow(elbowRight);
-		body.setLeftFoot(footLeft);
-		body.setRightFoot(footRight);
-		body.setLeftHand(handLeft);
-		body.setRightHand(handRight);
-		body.setCenterHip(hipCenter);
-		body.setLeftHip(hipLeft);
-		body.setRightHip(hipRight);
-		body.setLeftKnee(kneeLeft);
-		body.setRightKnee(kneeRight);
-		body.setCenterShoulder(shoulderCenter);
-		body.setLeftShoulder(shoulderLeft);
-		body.setRightShoulder(shoulderRight);
-		body.setSpine(spine);
-		body.setLeftWrist(wristLeft);
-		body.setRightWrist(wristRight);
+		createdBody.setHead(head);
+		createdBody.setLeftAnkle(ankleLeft);
+		createdBody.setRightAnkle(ankleRight);
+		createdBody.setLeftElbow(elbowLeft);
+		createdBody.setRightElbow(elbowRight);
+		createdBody.setLeftFoot(footLeft);
+		createdBody.setRightFoot(footRight);
+		createdBody.setLeftHand(handLeft);
+		createdBody.setRightHand(handRight);
+		createdBody.setCenterHip(hipCenter);
+		createdBody.setLeftHip(hipLeft);
+		createdBody.setRightHip(hipRight);
+		createdBody.setLeftKnee(kneeLeft);
+		createdBody.setRightKnee(kneeRight);
+		createdBody.setCenterShoulder(shoulderCenter);
+		createdBody.setLeftShoulder(shoulderLeft);
+		createdBody.setRightShoulder(shoulderRight);
+		createdBody.setSpine(spine);
+		createdBody.setLeftWrist(wristLeft);
+		createdBody.setRightWrist(wristRight);
 		
 		//create links
-		createLink(head, shoulderCenter);
-		createLink(shoulderCenter, shoulderLeft);
-		createLink(shoulderCenter, shoulderRight);
-		createLink(shoulderLeft, elbowLeft);
-		createLink(shoulderRight, elbowRight);
-		createLink(elbowLeft, wristLeft);
-		createLink(elbowRight, wristRight);
-		createLink(wristLeft, handLeft);
-		createLink(wristRight, handRight);
-		createLink(shoulderCenter,spine);
-		createLink(spine, hipCenter);
-		createLink(hipCenter, hipLeft);
-		createLink(hipCenter, hipRight);
-		createLink(hipLeft, kneeLeft);
-		createLink(hipRight, kneeRight);
-		createLink(kneeLeft, ankleLeft);
-		createLink(kneeRight, ankleRight);
-		createLink(ankleLeft, footLeft);
-		createLink(ankleRight, footRight);
+		createLink(head, shoulderCenter, createdBody);
+		createLink(shoulderCenter, shoulderLeft, createdBody);
+		createLink(shoulderCenter, shoulderRight, createdBody);
+		createLink(shoulderLeft, elbowLeft, createdBody);
+		createLink(shoulderRight, elbowRight, createdBody);
+		createLink(elbowLeft, wristLeft, createdBody);
+		createLink(elbowRight, wristRight, createdBody);
+		createLink(wristLeft, handLeft, createdBody);
+		createLink(wristRight, handRight, createdBody);
+		createLink(shoulderCenter,spine, createdBody);
+		createLink(spine, hipCenter, createdBody);
+		createLink(hipCenter, hipLeft, createdBody);
+		createLink(hipCenter, hipRight, createdBody);
+		createLink(hipLeft, kneeLeft, createdBody);
+		createLink(hipRight, kneeRight, createdBody);
+		createLink(kneeLeft, ankleLeft, createdBody);
+		createLink(kneeRight, ankleRight, createdBody);
+		createLink(ankleLeft, footLeft, createdBody);
+		createLink(ankleRight, footRight, createdBody);
+		return createdBody;
 	}
 	
-	private void createLink(PositionedElement source, PositionedElement target) {
+	private void createLink(PositionedElement source, PositionedElement target, Body body) {
 		HumanLink link = BodymodelFactory.eINSTANCE.createHumanLink();
 		link.setSource(source);
 		link.setTarget(target);
@@ -244,7 +266,7 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 	@Override
 	public void handleSkeletonData(Document doc) {
 		this.skeletonParser.parseSkeleton(doc);
-		emfStorage.updateBody();
+//		emfStorage.updateBody();
 	}
 
 	@Override

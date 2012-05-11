@@ -1,20 +1,20 @@
-package org.jnect.demo.gef.handler;
+package org.jnect.replay.handler;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.ui.PlatformUI;
 import org.jnect.demo.gef.HumanDiagramGraphicalEditor;
-import org.jnect.emfstore.EMFStorage;
+import org.jnect.replay.Replay;
 
 public class StartReplayHandler extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		EMFStorage store = EMFStorage.getInstance();
-		((HumanDiagramGraphicalEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor()).setContent(store.getReplayingBody());
-		store.replay(); 
-		return null;
+		Replay replay = Replay.getInstance();
+		((HumanDiagramGraphicalEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor()).setContent(replay.getReplayBody());
+		replay.replay();
+		return null; 
 	}
 
 }

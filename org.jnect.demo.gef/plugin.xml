@@ -23,16 +23,6 @@
             </command>
          </toolbar>
       </menuContribution>
-      <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=org.jnect.demo.gef">
-         <toolbar
-               id="org.jnect.demo.gef">
-            <command
-                  commandId="org.jnect.demo.replay.start"
-                  style="push">
-            </command>
-         </toolbar>
-      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.commands">
@@ -40,11 +30,6 @@
             defaultHandler="org.jnect.demo.gef.handler.StartGefHandler"
             id="org.jnect.demo.gef.start"
             name="Start GEF">
-      </command>
-      <command
-            defaultHandler="org.jnect.demo.gef.handler.StartReplayHandler"
-            id="org.jnect.demo.replay.start"
-            name="Start Replay">
       </command>
    </extension>
 

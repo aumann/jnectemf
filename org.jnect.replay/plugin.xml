@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="org.jnect.replay.replaybodyprovider" name="Replay Body Provider" schema="schema/org.jnect.replay.replaybodyprovider.exsd"/>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=org.jnect.demo.gef">
+         <toolbar
+               id="org.jnect.demo.gef">
+            <command
+                  commandId="org.jnect.replay.start"
+                  style="push">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.jnect.replay.handler.StartReplayHandler"
+            id="org.jnect.replay.start"
+            name="Start Replay">
+      </command>
+   </extension>
+
+</plugin>

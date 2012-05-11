@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.jnect.core.bodyprovider">
+      <body
+            class="org.jnect.emfstore.RecordingBodyProvider">
+      </body>
+   </extension>
+   <extension
+         point="org.jnect.replay.replaybodyprovider">
+      <body
+            class="org.jnect.emfstore.ReplayBodyProvider">
+      </body>
+   </extension>
+
+</plugin>
