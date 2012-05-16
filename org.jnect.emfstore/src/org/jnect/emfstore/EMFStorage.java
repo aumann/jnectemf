@@ -2,6 +2,7 @@ package org.jnect.emfstore;
 
 import java.security.AccessControlException;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -9,10 +10,12 @@ import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.emfstore.client.model.ModelFactory;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
 import org.eclipse.emf.emfstore.client.model.Workspace;
 import org.eclipse.emf.emfstore.client.model.WorkspaceManager;
+import org.eclipse.emf.emfstore.client.model.impl.WorkspaceImpl;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreClientUtil;
 import org.eclipse.emf.emfstore.client.model.util.EMFStoreCommand;
 import org.eclipse.emf.emfstore.common.model.ModelElementId;
@@ -53,13 +56,16 @@ import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
 public class EMFStorage {
-	private Body replayBody;
-	private Body recordingBody;
-	ProjectSpace projectSpace;
-	Usersession usersession;
-	private boolean currentlyReplaying;
 
 	private static EMFStorage INSTANCE;
+	private static String PROJECT_NAME = "jnectEMFStorage";
+
+	ProjectSpace projectSpace;
+	Usersession usersession;
+
+	private Body replayBody;
+	private Body recordingBody;
+	private boolean currentlyReplaying;
 
 	protected EMFStorage() {
 		connectToEMFStoreAndInit();
@@ -77,24 +83,39 @@ public class EMFStorage {
 			@Override
 			protected void doRun() {
 				try {
-					// create a default Usersession for the purpose of this tutorial and login
-					// see the corrsponding Javadoc for EMFStoreClientUtil.createUsersession(...) to setup the
-					// authentication for your custom client
+					// create a default Usersession and log in
 					usersession = EMFStoreClientUtil.createUsersession();
+					Workspace currentWorkspace = WorkspaceManager.getInstance().getCurrentWorkspace();
+					currentWorkspace.getUsersessions().add(usersession);
 					usersession.logIn();
 
-					// fetch the list of projects
-					Workspace currentWorkspace = WorkspaceManager.getInstance().getCurrentWorkspace();
-					List<ProjectInfo> projectList = currentWorkspace.getRemoteProjectList(usersession);
+					// search for existing storage project
+					Iterator<ProjectInfo> projectInfos = currentWorkspace.getRemoteProjectList(usersession).iterator();
+					ProjectInfo projectInfo = null;
+					while (projectInfos.hasNext()) {
+						ProjectInfo currentProjectInfo = projectInfos.next();
+						if (currentProjectInfo.getName().equals(PROJECT_NAME)) {
+							projectInfo = currentProjectInfo;
+							break;
+						}
+					}
 
-					// retrieve the first Project from the List
-					ProjectInfo projectInfo = projectList.iterator().next();
+					// if storage project is not existing create it, else retrieve it
+					if (projectInfo == null) {
+						projectSpace = ModelFactory.eINSTANCE.createProjectSpace();
+						projectSpace.setProject(org.eclipse.emf.emfstore.common.model.ModelFactory.eINSTANCE
+							.createProject());
+						projectSpace.setProjectName(PROJECT_NAME);
+						projectSpace.setProjectDescription("Project for jnect-storage");
+						projectSpace.setLocalOperations(ModelFactory.eINSTANCE.createOperationComposite());
+						projectSpace.initResources(currentWorkspace.eResource().getResourceSet());
+						((WorkspaceImpl) currentWorkspace).addProjectSpace(projectSpace);
+						currentWorkspace.save();
+						projectSpace.shareProject(usersession, new NullProgressMonitor());
+					} else {
+						projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+					}
 
-					// checkout the ProjectSpace, containing all Models of the Project, into the local Workspace
-					projectSpace = currentWorkspace.checkout(usersession, projectInfo);
-
-					// create and add a new "Book" from the example model
-					// change this part to create instances of your own model
 					Project project = projectSpace.getProject();
 					boolean found = false;
 					for (EObject obj : project.getAllModelElements()) {
@@ -137,8 +158,6 @@ public class EMFStorage {
 					});
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
-
-					System.out.println("Client run completed.");
 				} catch (AccessControlException e) {
 					ModelUtil.logException(e);
 				} catch (EmfStoreException e) {
@@ -178,7 +197,6 @@ public class EMFStorage {
 	}
 
 	public void replay() {
-		// dummyReplay();
 		replay(0);
 	}
 
@@ -205,10 +223,9 @@ public class EMFStorage {
 
 						for (AbstractOperation o : operations) {
 							replayElement(o);
-
-							// pause for a moment to see changes TODO remove
 						}
 						try {
+							// pause for a moment to see changes
 							Thread.sleep(25);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
