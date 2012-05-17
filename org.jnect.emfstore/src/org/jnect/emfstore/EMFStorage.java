@@ -6,10 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notification;
-import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EContentAdapter;
 import org.eclipse.emf.emfstore.client.model.ModelFactory;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
@@ -29,7 +28,6 @@ import org.eclipse.emf.emfstore.server.model.versioning.PrimaryVersionSpec;
 import org.eclipse.emf.emfstore.server.model.versioning.VersioningFactory;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AbstractOperation;
 import org.eclipse.emf.emfstore.server.model.versioning.operations.AttributeOperation;
-import org.eclipse.swt.widgets.Display;
 import org.jnect.bodymodel.Body;
 import org.jnect.bodymodel.BodymodelFactory;
 import org.jnect.bodymodel.CenterHip;
@@ -129,33 +127,7 @@ public class EMFStorage {
 						recordingBody = createAndFillBody();
 						project.addModelElement(recordingBody);
 					}
-					recordingBody.eAdapters().add(new Adapter() {
-						@Override
-						public void notifyChanged(Notification notification) {
-							Display.getDefault().syncExec(new Runnable() {
-								@Override
-								public void run() {
-									updateBody();
-								}
-							});
-						}
-
-						@Override
-						public Notifier getTarget() {
-							return recordingBody;
-						}
-
-						@Override
-						public void setTarget(Notifier newTarget) {
-							// TODO Auto-generated method stub
-						}
-
-						@Override
-						public boolean isAdapterForType(Object type) {
-							// TODO Auto-generated method stub
-							return false;
-						}
-					});
+					recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
 				} catch (AccessControlException e) {
@@ -177,15 +149,16 @@ public class EMFStorage {
 		return logMessage;
 	}
 
-	public void updateBody() {
+	private void commitBodyChanges() {
+		// TODO does this still make sense, since we now have a recording and a replaying body?
 		if (currentlyReplaying)
 			return;
+
 		// commit the pending changes of the project to the EMF Store
 		try {
 			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
 				new NullProgressMonitor());
 		} catch (EmfStoreException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -226,7 +199,7 @@ public class EMFStorage {
 						}
 						try {
 							// pause for a moment to see changes
-							Thread.sleep(25);
+							Thread.sleep(250);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -247,7 +220,7 @@ public class EMFStorage {
 			ModelElementId id = ao.getModelElementId();
 			EObject element = projectSpace.getProject().getModelElement(id);
 			Object newValue = ao.getNewValue();
-			String attribute = ao.getFeatureName(); // form: Set attribute-name attribute
+			String attribute = ao.getFeatureName(); // gets attribute name
 
 			if (element instanceof Head) {
 				setValue(attribute, replayBody.getHead(), newValue);
@@ -395,6 +368,20 @@ public class EMFStorage {
 
 	public Body getRecordingBody() {
 		return recordingBody;
+	}
+
+	private class CommitBodyChangesAdapter extends EContentAdapter {
+		// 3 changes (x, y, z) in every body element
+		private final int NEEDED_CHANGES = 3 * recordingBody.eContents().size();
+
+		@Override
+		public void notifyChanged(Notification notification) {
+			super.notifyChanged(notification);
+			// once there a NEEDED_CHANGES local changes all body elements are updated and they can be committed
+			if (projectSpace.getLocalOperations().getOperations().size() == NEEDED_CHANGES) {
+				commitBodyChanges();
+			}
+		}
 	}
 
 }
