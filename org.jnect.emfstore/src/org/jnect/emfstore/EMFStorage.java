@@ -4,6 +4,7 @@ import java.security.AccessControlException;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.emf.common.notify.Notification;
@@ -53,7 +54,7 @@ import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
-public class EMFStorage {
+public class EMFStorage extends Observable {
 
 	private static EMFStorage INSTANCE;
 	private static String PROJECT_NAME = "jnectEMFStorage";
@@ -63,17 +64,19 @@ public class EMFStorage {
 
 	private Body replayBody;
 	private Body recordingBody;
-	private boolean currentlyReplaying;
-
-	protected EMFStorage() {
-		connectToEMFStoreAndInit();
-	}
+	private List<ChangePackage> changePackages;
+	private boolean changePackagesUpdateNeeded;
 
 	public static EMFStorage getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new EMFStorage();
 		}
 		return INSTANCE;
+	}
+
+	protected EMFStorage() {
+		this.changePackagesUpdateNeeded = true;
+		connectToEMFStoreAndInit();
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -138,142 +141,6 @@ public class EMFStorage {
 			}
 		}.run(false);
 
-	}
-
-	private LogMessage createLogMessage(String name, String message) {
-		LogMessage logMessage = VersioningFactory.eINSTANCE.createLogMessage();
-		logMessage.setAuthor(name);
-		logMessage.setDate(Calendar.getInstance().getTime());
-		logMessage.setClientDate(Calendar.getInstance().getTime());
-		logMessage.setMessage(message);
-		return logMessage;
-	}
-
-	private void commitBodyChanges() {
-		// TODO does this still make sense, since we now have a recording and a replaying body?
-		if (currentlyReplaying)
-			return;
-
-		// commit the pending changes of the project to the EMF Store
-		try {
-			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
-				new NullProgressMonitor());
-		} catch (EmfStoreException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public Body getReplayingBody() {
-		if (replayBody == null)
-			replayBody = createAndFillBody();
-		return replayBody;
-	}
-
-	public void replay() {
-		replay(0);
-	}
-
-	/**
-	 * Replays the body model from emfstore
-	 * 
-	 * @param initCommit
-	 * @throws EmfStoreException
-	 */
-	public void replay(final int version) {
-		Thread replayThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				currentlyReplaying = true;
-				PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
-				start.setIdentifier(version);
-
-				List<AbstractOperation> operations;
-				try {
-					for (ChangePackage cp : projectSpace.getChanges(start, projectSpace.getBaseVersion())) {
-						cp.getOperations();
-						operations = cp.getLeafOperations();
-
-						for (AbstractOperation o : operations) {
-							replayElement(o);
-						}
-						try {
-							// pause for a moment to see changes
-							Thread.sleep(250);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						currentlyReplaying = false;
-					}
-				} catch (EmfStoreException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		replayThread.start();
-
-	}
-
-	private void replayElement(AbstractOperation o) {
-		if (o instanceof AttributeOperation) {
-			AttributeOperation ao = (AttributeOperation) o;
-			ModelElementId id = ao.getModelElementId();
-			EObject element = projectSpace.getProject().getModelElement(id);
-			Object newValue = ao.getNewValue();
-			String attribute = ao.getFeatureName(); // gets attribute name
-
-			if (element instanceof Head) {
-				setValue(attribute, replayBody.getHead(), newValue);
-			} else if (element instanceof CenterShoulder) {
-				setValue(attribute, replayBody.getCenterShoulder(), newValue);
-			} else if (element instanceof LeftShoulder) {
-				setValue(attribute, replayBody.getLeftShoulder(), newValue);
-			} else if (element instanceof RightShoulder) {
-				setValue(attribute, replayBody.getRightShoulder(), newValue);
-			} else if (element instanceof LeftElbow) {
-				setValue(attribute, replayBody.getLeftElbow(), newValue);
-			} else if (element instanceof RightElbow) {
-				setValue(attribute, replayBody.getRightElbow(), newValue);
-			} else if (element instanceof LeftWrist) {
-				setValue(attribute, replayBody.getLeftWrist(), newValue);
-			} else if (element instanceof RightWrist) {
-				setValue(attribute, replayBody.getRightWrist(), newValue);
-			} else if (element instanceof LeftHand) {
-				setValue(attribute, replayBody.getLeftHand(), newValue);
-			} else if (element instanceof RightHand) {
-				setValue(attribute, replayBody.getRightHand(), newValue);
-			} else if (element instanceof Spine) {
-				setValue(attribute, replayBody.getSpine(), newValue);
-			} else if (element instanceof CenterHip) {
-				setValue(attribute, replayBody.getCenterHip(), newValue);
-			} else if (element instanceof LeftHip) {
-				setValue(attribute, replayBody.getLeftHip(), newValue);
-			} else if (element instanceof RightHip) {
-				setValue(attribute, replayBody.getRightHip(), newValue);
-			} else if (element instanceof LeftKnee) {
-				setValue(attribute, replayBody.getLeftKnee(), newValue);
-			} else if (element instanceof RightKnee) {
-				setValue(attribute, replayBody.getRightKnee(), newValue);
-			} else if (element instanceof LeftAnkle) {
-				setValue(attribute, replayBody.getLeftAnkle(), newValue);
-			} else if (element instanceof RightAnkle) {
-				setValue(attribute, replayBody.getRightAnkle(), newValue);
-			} else if (element instanceof LeftFoot) {
-				setValue(attribute, replayBody.getLeftFoot(), newValue);
-			} else if (element instanceof RightFoot) {
-				setValue(attribute, replayBody.getRightFoot(), newValue);
-			}
-		}
-	}
-
-	private void setValue(String attribute, PositionedElement element, Object value) {
-		if (attribute.equalsIgnoreCase("x")) {
-			element.setX((Float) value);
-		} else if (attribute.equalsIgnoreCase("y")) {
-			element.setY((Float) value);
-		} else if (attribute.equalsIgnoreCase("z")) {
-			element.setZ((Float) value);
-		}
 	}
 
 	private Body createAndFillBody() {
@@ -366,8 +233,159 @@ public class EMFStorage {
 		body.getLinks().add(link);
 	}
 
+	private LogMessage createLogMessage(String name, String message) {
+		LogMessage logMessage = VersioningFactory.eINSTANCE.createLogMessage();
+		logMessage.setAuthor(name);
+		logMessage.setDate(Calendar.getInstance().getTime());
+		logMessage.setClientDate(Calendar.getInstance().getTime());
+		logMessage.setMessage(message);
+		return logMessage;
+	}
+
 	public Body getRecordingBody() {
 		return recordingBody;
+	}
+
+	public Body getReplayingBody() {
+		if (replayBody == null)
+			replayBody = createAndFillBody();
+		return replayBody;
+	}
+
+	public int getReplayStatesCount() {
+		return changePackages.size();
+	}
+
+	public void initReplay() {
+		if (changePackagesUpdateNeeded) {
+			PrimaryVersionSpec start = VersioningFactory.eINSTANCE.createPrimaryVersionSpec();
+			start.setIdentifier(1);
+			try {
+				changePackages = projectSpace.getChanges(start, projectSpace.getBaseVersion());
+				changePackagesUpdateNeeded = false;
+			} catch (EmfStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Replays the body model from emfstore
+	 * 
+	 * @param initCommit
+	 * @throws EmfStoreException
+	 */
+	public void replay(final int version) {
+		Thread replayThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				List<AbstractOperation> operations;
+
+				for (int i = version; i < changePackages.size(); i++) {
+					ChangePackage cp = changePackages.get(i);
+					cp.getOperations();
+					operations = cp.getLeafOperations();
+
+					for (AbstractOperation o : operations) {
+						replayElement(o);
+					}
+					setChanged();
+					notifyObservers(i);
+					try {
+						// pause for a moment to see changes
+						Thread.sleep(250);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		replayThread.start();
+
+	}
+
+	private void replayElement(AbstractOperation o) {
+		if (o instanceof AttributeOperation) {
+			AttributeOperation ao = (AttributeOperation) o;
+			ModelElementId id = ao.getModelElementId();
+			EObject element = projectSpace.getProject().getModelElement(id);
+			Object newValue = ao.getNewValue();
+			String attribute = ao.getFeatureName(); // gets attribute name
+
+			if (element instanceof Head) {
+				setValue(attribute, replayBody.getHead(), newValue);
+			} else if (element instanceof CenterShoulder) {
+				setValue(attribute, replayBody.getCenterShoulder(), newValue);
+			} else if (element instanceof LeftShoulder) {
+				setValue(attribute, replayBody.getLeftShoulder(), newValue);
+			} else if (element instanceof RightShoulder) {
+				setValue(attribute, replayBody.getRightShoulder(), newValue);
+			} else if (element instanceof LeftElbow) {
+				setValue(attribute, replayBody.getLeftElbow(), newValue);
+			} else if (element instanceof RightElbow) {
+				setValue(attribute, replayBody.getRightElbow(), newValue);
+			} else if (element instanceof LeftWrist) {
+				setValue(attribute, replayBody.getLeftWrist(), newValue);
+			} else if (element instanceof RightWrist) {
+				setValue(attribute, replayBody.getRightWrist(), newValue);
+			} else if (element instanceof LeftHand) {
+				setValue(attribute, replayBody.getLeftHand(), newValue);
+			} else if (element instanceof RightHand) {
+				setValue(attribute, replayBody.getRightHand(), newValue);
+			} else if (element instanceof Spine) {
+				setValue(attribute, replayBody.getSpine(), newValue);
+			} else if (element instanceof CenterHip) {
+				setValue(attribute, replayBody.getCenterHip(), newValue);
+			} else if (element instanceof LeftHip) {
+				setValue(attribute, replayBody.getLeftHip(), newValue);
+			} else if (element instanceof RightHip) {
+				setValue(attribute, replayBody.getRightHip(), newValue);
+			} else if (element instanceof LeftKnee) {
+				setValue(attribute, replayBody.getLeftKnee(), newValue);
+			} else if (element instanceof RightKnee) {
+				setValue(attribute, replayBody.getRightKnee(), newValue);
+			} else if (element instanceof LeftAnkle) {
+				setValue(attribute, replayBody.getLeftAnkle(), newValue);
+			} else if (element instanceof RightAnkle) {
+				setValue(attribute, replayBody.getRightAnkle(), newValue);
+			} else if (element instanceof LeftFoot) {
+				setValue(attribute, replayBody.getLeftFoot(), newValue);
+			} else if (element instanceof RightFoot) {
+				setValue(attribute, replayBody.getRightFoot(), newValue);
+			}
+		}
+	}
+
+	private void setValue(String attribute, PositionedElement element, Object value) {
+		if (attribute.equalsIgnoreCase("x")) {
+			element.setX((Float) value);
+		} else if (attribute.equalsIgnoreCase("y")) {
+			element.setY((Float) value);
+		} else if (attribute.equalsIgnoreCase("z")) {
+			element.setZ((Float) value);
+		}
+	}
+
+	public void setReplayToState(int state) {
+		ChangePackage cp = changePackages.get(state);
+		cp.getOperations();
+		List<AbstractOperation> operations = cp.getLeafOperations();
+
+		for (AbstractOperation o : operations) {
+			replayElement(o);
+		}
+	}
+
+	private void commitBodyChanges() {
+		// commit the pending changes of the project to the EMF Store
+		try {
+			projectSpace.commit(createLogMessage(usersession.getUsername(), "commit new state"), null,
+				new NullProgressMonitor());
+			changePackagesUpdateNeeded = true;
+		} catch (EmfStoreException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private class CommitBodyChangesAdapter extends EContentAdapter {

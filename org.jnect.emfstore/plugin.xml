@@ -8,10 +8,25 @@
       </body>
    </extension>
    <extension
-         point="org.jnect.replay.replaybodyprovider">
-      <body
-            class="org.jnect.emfstore.ReplayBodyProvider">
-      </body>
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.jnect.emfstore.replay.handler.StartReplayHandler"
+            id="org.jnect.emfstore.replay.start"
+            name="Start Replay">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=org.jnect.demo.gef">
+         <toolbar
+               id="org.jnect.demo.gef">
+            <command
+                  commandId="org.jnect.emfstore.replay.start"
+                  style="push">
+            </command>
+         </toolbar>
+      </menuContribution>
    </extension>
 
 </plugin>

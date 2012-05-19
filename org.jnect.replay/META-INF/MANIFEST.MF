@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Jnect Replay
 Bundle-SymbolicName: org.jnect.replay;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: org.jnect.replay.Activator
+Bundle-Activator: org.jnect.emfstore.replay.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.jnect.bodymodel,

@@ -1,4 +1,4 @@
-package org.jnect.replay;
+package org.jnect.emfstore.replay;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
