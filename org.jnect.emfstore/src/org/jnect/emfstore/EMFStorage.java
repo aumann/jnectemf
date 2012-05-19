@@ -90,7 +90,7 @@ public class EMFStorage extends Observable {
 					currentWorkspace.getUsersessions().add(usersession);
 					usersession.logIn();
 
-					// search for existing storage project
+					// search for existing storage project on server
 					Iterator<ProjectInfo> projectInfos = currentWorkspace.getRemoteProjectList(usersession).iterator();
 					ProjectInfo projectInfo = null;
 					while (projectInfos.hasNext()) {
@@ -101,7 +101,7 @@ public class EMFStorage extends Observable {
 						}
 					}
 
-					// if storage project is not existing create it, else retrieve it
+					// if storage project is not existing on server create one, else retrieve it
 					if (projectInfo == null) {
 						projectSpace = ModelFactory.eINSTANCE.createProjectSpace();
 						projectSpace.setProject(org.eclipse.emf.emfstore.common.model.ModelFactory.eINSTANCE
@@ -114,7 +114,19 @@ public class EMFStorage extends Observable {
 						currentWorkspace.save();
 						projectSpace.shareProject(usersession, new NullProgressMonitor());
 					} else {
-						projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+						// check if we already have a local copy, else checkout the project
+						boolean found = false;
+						for (ProjectSpace ps : currentWorkspace.getProjectSpaces()) {
+							if (ps.getProjectInfo().getName().equals(PROJECT_NAME)) {
+								projectSpace = ps;
+								projectSpace.setUsersession(usersession);
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							projectSpace = currentWorkspace.checkout(usersession, projectInfo);
+						}
 					}
 
 					Project project = projectSpace.getProject();

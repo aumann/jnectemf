@@ -37,6 +37,7 @@ public class SliderDialog extends Dialog implements Observer {
 		Shell parent = getParent();
 		GridLayout layout = new org.eclipse.swt.layout.GridLayout(1, false);
 		this.getParent().setLayout(layout);
+		this.getParent().setText("Replay control");
 
 		GridData gData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		slider = new Slider(parent, SWT.HORIZONTAL);
