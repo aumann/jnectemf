@@ -1,8 +1,5 @@
 package org.jnect.emfstore.replay;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 import org.jnect.bodymodel.Body;
 import org.jnect.emfstore.ReplayBodyProvider;
 
@@ -23,9 +20,7 @@ public class Replay {
 	}
 
 	public void displaySlider() {
-		Shell dlgShell = new Shell(Display.getDefault());
-		dlgShell.setSize(250, 125);
-		new SliderDialog(dlgShell, SWT.NONE, replayProvider).open();
+		new SliderDialog(replayProvider).open();
 	}
 
 	public Body getReplayBody() {
