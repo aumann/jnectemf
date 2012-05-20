@@ -378,12 +378,14 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public void setReplayToState(int state) {
-		ChangePackage cp = changePackages.get(state);
-		cp.getOperations();
-		List<AbstractOperation> operations = cp.getLeafOperations();
+		if (!changePackages.isEmpty()) {
+			ChangePackage cp = changePackages.get(state);
+			cp.getOperations();
+			List<AbstractOperation> operations = cp.getLeafOperations();
 
-		for (AbstractOperation o : operations) {
-			replayElement(o);
+			for (AbstractOperation o : operations) {
+				replayElement(o);
+			}
 		}
 	}
 

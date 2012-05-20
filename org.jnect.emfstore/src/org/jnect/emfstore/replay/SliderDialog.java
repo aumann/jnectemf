@@ -50,7 +50,11 @@ public class SliderDialog extends Dialog implements Observer {
 		label = new Label(parent, SWT.BORDER);
 		gData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		label.setLayoutData(gData);
-		label.setText(slider.getSelection() + 1 + "/" + max + "steps");
+		if (max == 0) {
+			label.setText("nothing to replay");
+		} else {
+			label.setText(slider.getSelection() + 1 + "/" + max + "steps");
+		}
 
 		Button button = new Button(parent, SWT.NONE);
 		gData = new GridData(SWT.LEAD, SWT.FILL, false, false);
