@@ -63,9 +63,9 @@ public class BodyBuffer {
 				if (!(elem instanceof PositionedElement))
 					continue;
 				PositionedElement pos = (PositionedElement) elem;
-				pos.setX(values[i]);
-				pos.setY(values[i + 1]);
-				pos.setZ(values[i + 2]);
+				pos.setX(values[i * 3]);
+				pos.setY(values[i * 3 + 1]);
+				pos.setZ(values[i * 3 + 2]);
 			}
 			committer.commit();
 		}

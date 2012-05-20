@@ -304,7 +304,7 @@ public class EMFStorage extends Observable implements ICommitter {
 					notifyObservers(i);
 					try {
 						// pause for a moment to see changes
-						Thread.sleep(250);
+						Thread.sleep(50);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
