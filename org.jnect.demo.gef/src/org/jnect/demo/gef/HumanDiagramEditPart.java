@@ -58,23 +58,28 @@ public class HumanDiagramEditPart extends AbstractGraphicalEditPart {
 	protected void refreshVisuals() {
 		final HumanPolylineConnectionAnchorFigure figure = (HumanPolylineConnectionAnchorFigure) getFigure();
 		PositionedElement model = (PositionedElement) getModel();
-		final HumanContainerEditPart parent = (HumanContainerEditPart) this.getParent();
+		final HumanContainerEditPart parent = (HumanContainerEditPart) this
+				.getParent();
 
-		figure.getLable().setText(model.getClass().getInterfaces()[0].getSimpleName());
-		// figure.getLable().setFont(new Font(Display.getCurrent(), "Arial", 5, 1));
-		figure.setForegroundColor(new Color(Display.getCurrent(), model.getColor_r(), model.getColor_g(), model.getColor_b()));
+		figure.getLable().setText(
+				model.getClass().getInterfaces()[0].getSimpleName());
+		// figure.getLable().setFont(new Font(Display.getCurrent(), "Arial", 5,
+		// 1));
+		figure.setForegroundColor(new Color(Display.getCurrent(), model
+				.getColor_r(), model.getColor_g(), model.getColor_b()));
 
-		if (getViewer() == null)
+		if (getViewer() == null || getViewer().getControl() == null)
 			return;
-		
-		Point size=getViewer().getControl().getSize();
-		float xRamp=(size.x-80)/2;
-		float yRamp=(size.y-80)/2;
-		float ramp=Math.min(xRamp, yRamp);
-		float xOffset=(size.x)/2;
-		float yOffset=(size.y)/2;
-		
-		Rectangle layout = new Rectangle(Math.round(xOffset + model.getX() * ramp), Math.round(yOffset - model.getY() * ramp), 40, 40);
+
+		Point size = getViewer().getControl().getSize();
+		float xRamp = (size.x - 80) / 2;
+		float yRamp = (size.y - 80) / 2;
+		float ramp = Math.min(xRamp, yRamp);
+		float xOffset = (size.x) / 2;
+		float yOffset = (size.y) / 2;
+
+		Rectangle layout = new Rectangle(Math.round(xOffset + model.getX()
+				* ramp), Math.round(yOffset - model.getY() * ramp), 40, 40);
 		parent.setLayoutConstraint(this, figure, layout);
 	}
 
@@ -113,20 +118,26 @@ public class HumanDiagramEditPart extends AbstractGraphicalEditPart {
 		});
 	}
 
-	public ConnectionAnchor getSourceConnectionAnchor(ConnectionEditPart connection) {
-		return ((HumanPolylineConnectionAnchorFigure) getFigure()).getConnectionAnchor();
+	public ConnectionAnchor getSourceConnectionAnchor(
+			ConnectionEditPart connection) {
+		return ((HumanPolylineConnectionAnchorFigure) getFigure())
+				.getConnectionAnchor();
 	}
 
-	public ConnectionAnchor getTargetConnectionAnchor(ConnectionEditPart connection) {
-		return ((HumanPolylineConnectionAnchorFigure) getFigure()).getConnectionAnchor();
+	public ConnectionAnchor getTargetConnectionAnchor(
+			ConnectionEditPart connection) {
+		return ((HumanPolylineConnectionAnchorFigure) getFigure())
+				.getConnectionAnchor();
 	}
 
 	public ConnectionAnchor getSourceConnectionAnchor(Request request) {
-		return ((HumanPolylineConnectionAnchorFigure) getFigure()).getConnectionAnchor();
+		return ((HumanPolylineConnectionAnchorFigure) getFigure())
+				.getConnectionAnchor();
 	}
 
 	public ConnectionAnchor getTargetConnectionAnchor(Request request) {
-		return ((HumanPolylineConnectionAnchorFigure) getFigure()).getConnectionAnchor();
+		return ((HumanPolylineConnectionAnchorFigure) getFigure())
+				.getConnectionAnchor();
 	}
 
 }

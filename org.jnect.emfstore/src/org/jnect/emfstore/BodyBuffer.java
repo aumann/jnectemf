@@ -1,9 +1,11 @@
 package org.jnect.emfstore;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EContentAdapter;
@@ -13,7 +15,7 @@ import org.jnect.bodymodel.PositionedElement;
 public class BodyBuffer {
 	Body body;
 	final int NEEDED_CHANGES;
-	List<float[]> buffer = new ArrayList<float[]>();
+	List<float[]> buffer = Collections.synchronizedList(new ArrayList<float[]>());
 
 	public BodyBuffer() {
 		this.body = EMFStorage.createAndFillBody();
@@ -53,9 +55,10 @@ public class BodyBuffer {
 		}
 	}
 
-	public void flushToBody(Body flushBody, ICommitter committer) {
+	public void flushToBody(Body flushBody, ICommitter committer, IProgressMonitor monitor) {
+		monitor.beginTask("Saving to EMFStore", buffer.size());
 		Iterator<float[]> bufferIt = buffer.iterator();
-		while (bufferIt.hasNext()) {
+		while (bufferIt.hasNext() && !monitor.isCanceled()) {
 			float[] values = bufferIt.next();
 			for (int i = 0; i < NEEDED_CHANGES / 3; i++) {
 				assert flushBody.eContents().size() == NEEDED_CHANGES / 3;
@@ -68,6 +71,8 @@ public class BodyBuffer {
 				pos.setZ(values[i * 3 + 2]);
 			}
 			committer.commit();
+			monitor.worked(1);
 		}
+		buffer.clear();
 	}
 }
