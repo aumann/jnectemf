@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.jnect.demo.feature_0.1.0.jar" id="org.jnect.demo.feature" version="0.1.0">
-      <category name="org.jnect.demo"/>
-   </feature>
    <feature url="features/org.jnect.api.feature_0.1.0.jar" id="org.jnect.api.feature" version="0.1.0">
       <category name="org.jnect.api"/>
    </feature>
-   <category-def name="org.jnect.demo" label="Jnect Demo">
-      <description>
-         Feature containing demos: debug, game and gef
-      </description>
-   </category-def>
+   <feature url="features/org.jnect.demo.feature_0.1.3.jar" id="org.jnect.demo.feature" version="0.1.3"/>
    <category-def name="org.jnect.api" label="Jnect API"/>
 </site>
