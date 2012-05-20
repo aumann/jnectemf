@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.6"?>
 
-<target name="jnectTargetDefinition" sequenceNumber="3">
+<target name="jnectTargetDefinition" sequenceNumber="4">
 <locations>
 <location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.sdk.ide" version="3.7.2.M20120208-0800"/>
@@ -22,6 +22,14 @@
 <location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.gef.sdk.feature.group" version="3.7.2.v20110927-2020-7G7W77A5WNgIRPdWXDIbNTSQPdQL"/>
 <repository location="http://download.eclipse.org/releases/indigo/"/>
+</location>
+<location includeAllPlatforms="false" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.ecp.common.feature.feature.group" version="0.8.9.M948"/>
+<unit id="org.eclipse.emf.ecp.editor.feature.feature.group" version="0.8.9.M948"/>
+<unit id="org.eclipse.emf.ecp.navigator.feature.feature.group" version="0.8.9.M948"/>
+<unit id="org.eclipse.emf.ecp.navigatoreditorbridge.feature.feature.group" version="0.8.9.M948"/>
+<unit id="org.eclipse.emf.ecp.validation.feature.feature.group" version="0.8.9.M948"/>
+<repository location="http://download.eclipse.org/emf-store/milestones/latest"/>
 </location>
 </locations>
 </target>
