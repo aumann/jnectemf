@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Observable;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.util.EContentAdapter;
 import org.eclipse.emf.emfstore.client.model.ModelFactory;
 import org.eclipse.emf.emfstore.client.model.ProjectSpace;
 import org.eclipse.emf.emfstore.client.model.Usersession;
@@ -54,7 +52,7 @@ import org.jnect.bodymodel.RightShoulder;
 import org.jnect.bodymodel.RightWrist;
 import org.jnect.bodymodel.Spine;
 
-public class EMFStorage extends Observable {
+public class EMFStorage extends Observable implements ICommitter {
 
 	private static EMFStorage INSTANCE;
 	private static String PROJECT_NAME = "jnectEMFStorage";
@@ -142,7 +140,7 @@ public class EMFStorage extends Observable {
 						recordingBody = createAndFillBody();
 						project.addModelElement(recordingBody);
 					}
-					recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
+					// recordingBody.eAdapters().add(new CommitBodyChangesAdapter());
 					projectSpace.commit(createLogMessage(usersession.getUsername(), "commit initial body"), null,
 						new NullProgressMonitor());
 				} catch (AccessControlException e) {
@@ -155,7 +153,7 @@ public class EMFStorage extends Observable {
 
 	}
 
-	private Body createAndFillBody() {
+	public static Body createAndFillBody() {
 		Body body = BodymodelFactory.eINSTANCE.createBody();
 		BodymodelFactory factory = BodymodelFactory.eINSTANCE;
 		// create Elements
@@ -234,7 +232,7 @@ public class EMFStorage extends Observable {
 		return body;
 	}
 
-	private void createLink(PositionedElement source, PositionedElement target, Body body) {
+	private static void createLink(PositionedElement source, PositionedElement target, Body body) {
 		HumanLink link = BodymodelFactory.eINSTANCE.createHumanLink();
 		link.setSource(source);
 		link.setTarget(target);
@@ -400,18 +398,23 @@ public class EMFStorage extends Observable {
 		}
 	}
 
-	private class CommitBodyChangesAdapter extends EContentAdapter {
-		// 3 changes (x, y, z) in every body element
-		private final int NEEDED_CHANGES = 3 * recordingBody.eContents().size();
+	// private class CommitBodyChangesAdapter extends EContentAdapter {
+	// // 3 changes (x, y, z) in every body element
+	// private final int NEEDED_CHANGES = 3 * recordingBody.eContents().size();
+	//
+	// @Override
+	// public void notifyChanged(Notification notification) {
+	// super.notifyChanged(notification);
+	// // once there a NEEDED_CHANGES local changes all body elements are updated and they can be committed
+	// if (projectSpace.getLocalOperations().getOperations().size() == NEEDED_CHANGES) {
+	// commitBodyChanges();
+	// }
+	// }
+	// }
 
-		@Override
-		public void notifyChanged(Notification notification) {
-			super.notifyChanged(notification);
-			// once there a NEEDED_CHANGES local changes all body elements are updated and they can be committed
-			if (projectSpace.getLocalOperations().getOperations().size() == NEEDED_CHANGES) {
-				commitBodyChanges();
-			}
-		}
+	@Override
+	public void commit() {
+		commitBodyChanges();
 	}
 
 }
