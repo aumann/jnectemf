@@ -6,7 +6,8 @@
       provider-name="jnect.org">
 
    <description url="http://www.example.com/description">
-      This feature contains plugins demonstraiting the possibilities of interacting with eclipse via kinect.
+      This feature contains plugins demonstraiting the possibilities
+of interacting with eclipse via kinect.
    </description>
 
    <copyright url="http://www.example.com/copyright">
@@ -114,6 +115,13 @@ This Agreement is governed by the laws of the State of New York and the intellec
 
    <plugin
          id="org.jnect.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.jnect.emfstore"
          download-size="0"
          install-size="0"
          version="0.0.0"
