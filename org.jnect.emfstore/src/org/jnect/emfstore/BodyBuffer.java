@@ -51,28 +51,30 @@ public class BodyBuffer {
 			state[i * 3] = pos.getX();
 			state[i * 3 + 1] = pos.getY();
 			state[i * 3 + 2] = pos.getZ();
-			buffer.add(state);
 		}
+		buffer.add(state);
 	}
 
 	public void flushToBody(Body flushBody, ICommitter committer, IProgressMonitor monitor) {
+		assert flushBody.eContents().size() == NEEDED_CHANGES / 3;
 		monitor.beginTask("Saving to EMFStore", buffer.size());
-		Iterator<float[]> bufferIt = buffer.iterator();
-		while (bufferIt.hasNext() && !monitor.isCanceled()) {
-			float[] values = bufferIt.next();
-			for (int i = 0; i < NEEDED_CHANGES / 3; i++) {
-				assert flushBody.eContents().size() == NEEDED_CHANGES / 3;
-				EObject elem = flushBody.eContents().get(i);
-				if (!(elem instanceof PositionedElement))
-					continue;
-				PositionedElement pos = (PositionedElement) elem;
-				pos.setX(values[i * 3]);
-				pos.setY(values[i * 3 + 1]);
-				pos.setZ(values[i * 3 + 2]);
+		synchronized (buffer) {
+			Iterator<float[]> bufferIt = buffer.iterator();
+			while (bufferIt.hasNext() && !monitor.isCanceled()) {
+				float[] values = bufferIt.next();
+				for (int i = 0; i < NEEDED_CHANGES / 3; i++) {
+					EObject elem = flushBody.eContents().get(i);
+					if (!(elem instanceof PositionedElement))
+						continue;
+					PositionedElement pos = (PositionedElement) elem;
+					pos.setX(values[i * 3]);
+					pos.setY(values[i * 3 + 1]);
+					pos.setZ(values[i * 3 + 2]);
+				}
+				committer.commit();
+				monitor.worked(1);
 			}
-			committer.commit();
-			monitor.worked(1);
+			buffer.clear();
 		}
-		buffer.clear();
 	}
 }
