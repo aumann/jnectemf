@@ -26,7 +26,7 @@ public class RecordingBodyProvider implements IBodyProvider {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				buffer.flushToBody(store.getRecordingBody(), store, monitor);
+				buffer.flushToBody(store.getRecordingBody(), store, store.getCommitResolution(), monitor);
 				monitor.done();
 				return Status.OK_STATUS;
 			}

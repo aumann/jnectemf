@@ -64,6 +64,8 @@ public class EMFStorage extends Observable implements ICommitter {
 	private Body recordingBody;
 	private List<ChangePackage> changePackages;
 	private boolean changePackagesUpdateNeeded;
+	private int replayStatesCount = 0;
+	private final int BODY_ELEMENTS_COUNT;
 
 	public static EMFStorage getInstance() {
 		if (INSTANCE == null) {
@@ -75,6 +77,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	protected EMFStorage() {
 		this.changePackagesUpdateNeeded = true;
 		connectToEMFStoreAndInit();
+		BODY_ELEMENTS_COUNT = recordingBody.eContents().size();
 	}
 
 	private void connectToEMFStoreAndInit() {
@@ -263,7 +266,7 @@ public class EMFStorage extends Observable implements ICommitter {
 	}
 
 	public int getReplayStatesCount() {
-		return changePackages.size();
+		return replayStatesCount;
 	}
 
 	public void initReplay() {
@@ -273,6 +276,11 @@ public class EMFStorage extends Observable implements ICommitter {
 			try {
 				changePackages = projectSpace.getChanges(start, projectSpace.getBaseVersion());
 				changePackagesUpdateNeeded = false;
+				replayStatesCount = 0;
+				for (ChangePackage cp : changePackages) {
+					assert cp.getLeafOperations().size() % (BODY_ELEMENTS_COUNT * 3) == 0;
+					replayStatesCount += cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+				}
 			} catch (EmfStoreException e) {
 				e.printStackTrace();
 			}
@@ -286,33 +294,55 @@ public class EMFStorage extends Observable implements ICommitter {
 	 * @throws EmfStoreException
 	 */
 	public void replay(final int version) {
+		final CommitVersionAndOffset versAndOffset = getCommitVersionForReplayVersion(version);
 		Thread replayThread = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				List<AbstractOperation> operations;
 
-				for (int i = version; i < changePackages.size(); i++) {
+				int currentVersion = versAndOffset.version + versAndOffset.offset;
+
+				for (int i = versAndOffset.version; i < changePackages.size(); i++) {
 					ChangePackage cp = changePackages.get(i);
 					cp.getOperations();
 					operations = cp.getLeafOperations();
+					System.out.println(cp.getLeafOperations().size());
+					System.out.println(cp.getOperations().size());
 
-					for (AbstractOperation o : operations) {
+					for (int j = 0; j < cp.getLeafOperations().size(); j++) {
+						AbstractOperation o = operations.get(j);
 						replayElement(o);
-					}
-					setChanged();
-					notifyObservers(i);
-					try {
-						// pause for a moment to see changes
-						Thread.sleep(50);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+
+						if (j % (BODY_ELEMENTS_COUNT * 3) == 0) {
+							currentVersion++;
+							setChanged();
+							notifyObservers(currentVersion);
+							try {
+								// pause for a moment to see changes
+								Thread.sleep(50);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 			}
 		});
 		replayThread.start();
 
+	}
+
+	private CommitVersionAndOffset getCommitVersionForReplayVersion(int repVersion) {
+		int countedBodies = 0;
+		for (int i = 0; i < changePackages.size(); i++) {
+			ChangePackage cp = changePackages.get(i);
+			countedBodies += cp.getLeafOperations().size() / 3 / BODY_ELEMENTS_COUNT;
+			if (countedBodies >= repVersion)
+				return new CommitVersionAndOffset(i, countedBodies - repVersion);
+		}
+		assert false : "The last change package should at the very latest contain the searched repVersion!";
+		return new CommitVersionAndOffset(changePackages.size() - 1, 0);
 	}
 
 	private void replayElement(AbstractOperation o) {
@@ -417,6 +447,23 @@ public class EMFStorage extends Observable implements ICommitter {
 	@Override
 	public void commit() {
 		commitBodyChanges();
+	}
+
+	/**
+	 * @return The number of body changes squashed into one commit.
+	 */
+	public int getCommitResolution() {
+		return 10;
+	}
+
+	private class CommitVersionAndOffset {
+		public int version;
+		public int offset;
+
+		public CommitVersionAndOffset(int version, int offset) {
+			this.version = version;
+			this.offset = offset;
+		}
 	}
 
 }
