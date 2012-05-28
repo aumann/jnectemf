@@ -69,6 +69,8 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 	private Map<String, Set<SpeechListener>> filteredSpeechListeners = new HashMap<String, Set<SpeechListener>>();
 	private Set<SpeechListener> unfilteredSpeechListeners = new HashSet<SpeechListener>();
 
+	private IBodyProvider bodyProvider;
+
 	public KinectManagerImpl() {
 		// this.connectionManager = new SocketConnectionManager();
 		this.connectionManager = new ProxyConnectionManager();
@@ -90,7 +92,7 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 			body = createAndFillBody();
 		} else {
 			try {
-				IBodyProvider bodyProvider = (IBodyProvider) bodyConfElements[0].createExecutableExtension("class");
+				bodyProvider = (IBodyProvider) bodyConfElements[0].createExecutableExtension("class");
 				body = bodyProvider.getBody();
 			} catch (CoreException e) {
 				e.printStackTrace();
@@ -222,6 +224,9 @@ public class KinectManagerImpl implements KinectManager, KinectDataHandler {
 	@Override
 	public void stopSkeletonTracking() {
 		this.connectionManager.stopSkeletonTracking();
+		if (bodyProvider != null) {
+			bodyProvider.save();
+		}
 	}
 
 	@Override

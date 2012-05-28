@@ -4,6 +4,8 @@ import java.util.Observable;
 import java.util.Observer;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -26,10 +28,24 @@ public class SliderDialog extends Dialog implements Observer {
 	private Label label;
 	private int max;
 
-	public SliderDialog(Shell parent, int style, IReplayBodyProvider rbp) {
-		super(parent, style);
+	public SliderDialog(IReplayBodyProvider rbp) {
+		super(new Shell(Display.getDefault()), SWT.NONE);
+		Shell dlgShell = this.getParent();
+		dlgShell.setSize(250, 125);
+		dlgShell.addDisposeListener(new DisposeListener() {
+
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				disposeDialog();
+			}
+		});
 		this.replayBodyProvider = rbp;
 		EMFStorage.getInstance().addObserver(this);
+	}
+
+	protected void disposeDialog() {
+		// widgets get auto-disposed, remove this as an observer
+		EMFStorage.getInstance().deleteObserver(this);
 	}
 
 	public void open() {
@@ -50,7 +66,11 @@ public class SliderDialog extends Dialog implements Observer {
 		label = new Label(parent, SWT.BORDER);
 		gData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		label.setLayoutData(gData);
-		label.setText(slider.getSelection() + 1 + "/" + max + "steps");
+		if (max == 0) {
+			label.setText("nothing to replay");
+		} else {
+			label.setText(slider.getSelection() + 1 + "/" + max + "steps");
+		}
 
 		Button button = new Button(parent, SWT.NONE);
 		gData = new GridData(SWT.LEAD, SWT.FILL, false, false);

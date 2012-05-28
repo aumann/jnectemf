@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.jnect</groupId>
+  <artifactId>jnectemf</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>jnectTargetDefinition</module>
+    <module>org.jnect.api.feature</module>
+    <module>org.jnect.bodymodel</module>
+    <module>org.jnect.core</module>
+    <module>org.jnect.demo.debug</module>
+    <module>org.jnect.demo.feature</module>
+    <module>org.jnect.demo.game</module>
+    <module>org.jnect.demo.gef</module>
+    <module>org.jnect.demo.presentation</module>
+    <module>org.jnect.emfstore</module>
+    <module>org.jnect.gesture</module>
+    <module>org.jnect.releng</module>
+    <module>org.jnect.ui</module>
+    <module>org.jnect.updatesite</module>
+  </modules>
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.sonatype.tycho</groupId>
+        <artifactId>tycho-maven-plugin</artifactId>
+        <version>0.11.1</version>
+        <extensions>true</extensions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.tycho</groupId>
+        <artifactId>maven-osgi-compiler-plugin</artifactId>
+        <version>0.11.1</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.tycho</groupId>
+        <artifactId>target-platform-configuration</artifactId>
+        <version>0.11.1</version>
+        <configuration>
+          <resolver>p2</resolver>
+          <target>
+            <artifact>
+              <groupId>org.jnect</groupId>
+              <artifactId>jnectTargetDefinition</artifactId>
+              <version>3.6.0-SNAPSHOT</version>
+              <classifier>jnectTargetDefinition</classifier>
+            </artifact>
+          </target>
+          <environments>
+            <environment>
+              <os>win32</os>
+              <ws>win32</ws>
+              <arch>x86</arch>
+            </environment>
+            <environment>
+              <os>linux</os>
+              <ws>gtk</ws>
+              <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>macosx</os>
+              <ws>cocoa</ws>
+              <arch>x86_64</arch>
+            </environment>
+          </environments>
+          <ignoreTychoRepositories>false</ignoreTychoRepositories>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>
