@@ -22,10 +22,11 @@ import org.eclipse.swt.widgets.Display;
 import org.jnect.bodymodel.PositionedElement;
 
 public class CursorShapeEditPart extends AbstractGraphicalEditPart implements NodeEditPart {
+
 	private ConnectionAnchor anchor;
 
 	// adapter to connect model to jnect
-	Adapter changeAdapter = new Adapter() {
+	private Adapter positionChangeAdapter = new Adapter() {
 		@Override
 		public void notifyChanged(Notification notification) {
 			Display.getDefault().syncExec(new Runnable() {
@@ -59,7 +60,7 @@ public class CursorShapeEditPart extends AbstractGraphicalEditPart implements No
 	public void activate() {
 		if (!isActive()) {
 			super.activate();
-			getPositionedElement().eAdapters().add(changeAdapter);
+			getPositionedElement().eAdapters().add(positionChangeAdapter);
 		}
 	}
 
@@ -96,7 +97,7 @@ public class CursorShapeEditPart extends AbstractGraphicalEditPart implements No
 	public void deactivate() {
 		if (isActive()) {
 			super.deactivate();
-			getPositionedElement().eAdapters().remove(changeAdapter);
+			getPositionedElement().eAdapters().remove(positionChangeAdapter);
 		}
 	}
 
@@ -176,12 +177,20 @@ public class CursorShapeEditPart extends AbstractGraphicalEditPart implements No
 	}
 
 	protected void refreshVisuals() {
-		final IFigure figure = getFigure();
+		IFigure figure = getFigure();
 		PositionedElement model = getPositionedElement();
-		final DiagramEditPart parent = (DiagramEditPart) this.getParent();
+		DiagramEditPart parent = (DiagramEditPart) this.getParent();
+		CursorShape cursor = (CursorShape) getModel();
 
-		if (getViewer() == null || getViewer().getControl() == null)
+		if (getViewer() == null || getViewer().getControl() == null) {
 			return;
+		}
+
+		if (cursor.isEditing()) {
+			figure.setBackgroundColor(ColorConstants.orange);
+		} else {
+			figure.setBackgroundColor(ColorConstants.red);
+		}
 
 		Point size = getViewer().getControl().getSize();
 
