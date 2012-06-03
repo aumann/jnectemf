@@ -29,11 +29,13 @@ public class CursorShape extends Shape {
 		return positionedElement;
 	}
 
-	public void switchGefEditingMode() {
+	public boolean switchGefEditingMode() {
 		if (isEditing()) {
 			isEditing = false;
+			return false;
 		} else {
 			isEditing = true;
+			return true;
 		}
 	}
 
