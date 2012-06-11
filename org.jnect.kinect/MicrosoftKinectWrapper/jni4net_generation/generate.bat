@@ -17,10 +17,16 @@ call build.cmd
 copy *.jar ..\lib\
 copy *.dll ..\lib\
 
+copy *.jar ..\..\..\..\org.jnect.core\lib\
+copy *.dll ..\..\..\..\org.jnect.core\lib\
+
 cd ..
 
 copy *.jar .\lib\
 copy *.dll .\lib\
+
+copy *.jar .\..\..\..\org.jnect.core\lib\
+copy *.dll .\..\..\..\org.jnect.core\lib\
 
 echo.
 echo Generation process terminated. Results can be found in the folder lib. 

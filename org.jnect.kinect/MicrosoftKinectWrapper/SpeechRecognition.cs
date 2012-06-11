@@ -44,7 +44,7 @@ namespace MicrosoftKinectWrapper
 
     public class SpeechRecognition : ISpeechRecognition
     {
-        private const string RecognizerId = "SR_MS_en-US_Kinect_11.0";
+        //private const string RecognizerId = "SR_MS_en-US_Kinect_11.0";
         private SpeechRecognitionEngine sre;
         //private StreamWriter output;
         private Stream s;
@@ -66,11 +66,13 @@ namespace MicrosoftKinectWrapper
             source.AutomaticGainControlEnabled = false; //Important to turn this off for speech recognition
             source.EchoCancellationMode = EchoCancellationMode.None; //SystemMode.OptibeamArrayOnly; //No AEC for this sample
 
-            RecognizerInfo ri = SpeechRecognitionEngine.InstalledRecognizers().Where(r => r.Id == RecognizerId).FirstOrDefault();
+            //RecognizerInfo ri = SpeechRecognitionEngine.InstalledRecognizers().Where(r => r.Id == RecognizerId).FirstOrDefault();
+            RecognizerInfo ri = getKinectRecognizer();
 
             if (ri == null)
             {
-                Console.WriteLine("Could not find speech recognizer: {0}. Please refer to the sample requirements.", RecognizerId);
+                //Console.WriteLine("Could not find speech recognizer: {0}. Please refer to the sample requirements.", RecognizerId);
+                Console.WriteLine("Could not find speech recognizer. Please refer to the sample requirements.");
                 return;
             }
 
@@ -114,6 +116,21 @@ namespace MicrosoftKinectWrapper
 
             startRecog();
 
+        }
+
+        private static RecognizerInfo getKinectRecognizer()
+        {
+            foreach (RecognizerInfo recognizer in SpeechRecognitionEngine.InstalledRecognizers())
+            {
+                string value;
+                recognizer.AdditionalInfo.TryGetValue("Kinect", out value);
+                if ("True".Equals(value, StringComparison.OrdinalIgnoreCase) && "en-US".Equals(recognizer.Culture.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return recognizer;
+                }
+            }
+
+            return null;
         }
 
         public string getSpeech()
